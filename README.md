@@ -1,2 +1,2 @@
 # shantyvault
-FOr STroage Kepper
+FOr STorage KepPEer
