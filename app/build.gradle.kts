@@ -100,11 +100,9 @@ dependencies {
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.5.0")
 
-    // Supabase
-    implementation("io.github.jan.supabase:auth-kt:2.4.0")
-    implementation("io.github.jan.supabase:storage-kt:2.4.0")
-    implementation("io.github.jan.supabase:postgrest-kt:2.4.0")
-    implementation("io.github.jan.supabase:realtime-kt:2.4.0")
+    // Supabase (2.x uses combined artifact + Ktor 2.x)
+    implementation("io.github.jan-tennert.supabase:supabase-kt:2.6.1")
+    implementation("io.ktor:ktor-client-android:2.3.12")
 
     // Kotlin serialization (required by Supabase)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
@@ -116,7 +114,7 @@ dependencies {
 
     // Security / Encryption
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
-    implementation("net.zetetic:android-database-sqlcipher:4.5.6")
+    implementation("net.zetetic:android-database-sqlcipher:4.5.4")
     implementation("androidx.sqlite:sqlite-ktx:2.4.0")
 
     // Biometric
@@ -127,7 +125,7 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.2.1")
 
     // PDF viewer
-    implementation("com.github.barteksc:android-pdf-viewer:3.2.0-beta.1")
+    implementation("com.github.barteksc:android-pdf-viewer:2.8.2")
 
     // Shimmer for loading skeletons
     implementation("com.valentinilk.shimmer:compose-shimmer:1.0.0")
