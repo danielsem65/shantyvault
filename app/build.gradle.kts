@@ -101,10 +101,10 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
 
     // Supabase
-    implementation("io.github.jan-tennert.supabase:auth-kt:2.4.0")
-    implementation("io.github.jan-tennert.supabase:storage-kt:2.4.0")
-    implementation("io.github.jan-tennert.supabase:postgrest-kt:2.4.0")
-    implementation("io.github.jan-tennert.supabase:realtime-kt:2.4.0")
+    implementation("io.github.jan.supabase:auth-kt:2.4.0")
+    implementation("io.github.jan.supabase:storage-kt:2.4.0")
+    implementation("io.github.jan.supabase:postgrest-kt:2.4.0")
+    implementation("io.github.jan.supabase:realtime-kt:2.4.0")
 
     // Kotlin serialization (required by Supabase)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
