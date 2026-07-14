@@ -5,8 +5,8 @@ object Constants {
     const val BASE_URL = "https://api.shantyvault.com/"
 
     // Supabase configuration - Replace with your Supabase project values
-    const val SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co"
-    const val SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"
+    const val SUPABASE_URL = "https://iprjbhkxbqnheawligte.supabase.co"
+    const val SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwcmpiaGt4YnFuaGVhd2xpZ3RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzkxNjEsImV4cCI6MjA5OTU1NTE2MX0.LquFhsp4u6_lbxZ8wZe7LX58A7VaRkEVu4vGXf416o8"
     const val SUPABASE_STORAGE_BUCKET = "vault-files"
 
     const val DB_NAME = "shanty_vault.db"
