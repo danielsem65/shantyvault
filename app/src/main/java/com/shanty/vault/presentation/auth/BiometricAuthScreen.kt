@@ -19,14 +19,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun BiometricAuthScreen(
     onUsePassword: () -> Unit,
-    onAuthSuccess: () -> Unit,
+    onAuthenticated: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val authState by viewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
         if (authState is AuthState.Authenticated) {
-            onAuthSuccess()
+            onAuthenticated()
         }
     }
 

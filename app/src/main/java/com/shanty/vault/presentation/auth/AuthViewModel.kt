@@ -89,21 +89,11 @@ class AuthViewModel @Inject constructor(
     fun verifyEmail() {
         viewModelScope.launch {
             _authState.value = Loading
-            val user = firebaseAuth()
-            if (user?.isEmailVerified == true) {
-                _authState.value = Success("Email verified")
-            } else {
-                try {
-                    user?.reload()
-                    if (user?.isEmailVerified == true) {
-                        _authState.value = Success("Email verified")
-                    } else {
-                        _authState.value = Error("Please verify your email and try again")
-                    }
-                } catch (e: Exception) {
-                    _authState.value = Error("Failed to check verification status")
-                }
-            }
+            val result = authRepository.verifyEmail("")
+            _authState.value = result.fold(
+                onSuccess = { Success("Email verified") },
+                onFailure = { Error(it.message ?: "Please verify your email and try again") }
+            )
         }
     }
 
@@ -118,11 +108,18 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun resetState() {
-        _authState.value = Idle
+    fun changePassword(currentPassword: String, newPassword: String) {
+        viewModelScope.launch {
+            _authState.value = Loading
+            val result = authRepository.changePassword(currentPassword, newPassword)
+            _authState.value = result.fold(
+                onSuccess = { Success("Password changed successfully") },
+                onFailure = { Error(it.message ?: "Failed to change password") }
+            )
+        }
     }
 
-    private fun firebaseAuth(): com.google.firebase.auth.FirebaseUser? {
-        return com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+    fun resetState() {
+        _authState.value = Idle
     }
 }

@@ -45,6 +45,7 @@ fun MediaViewerScreen(
     viewModel: MediaViewerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(fileId) {
         viewModel.loadFile(fileId)
@@ -78,10 +79,23 @@ fun MediaViewerScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { }) {
-                        Icon(Icons.Filled.Download, contentDescription = "Download")
+                    IconButton(
+                        onClick = { viewModel.downloadFile(context) },
+                        enabled = !uiState.isDownloading
+                    ) {
+                        if (uiState.isDownloading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(Icons.Filled.Download, contentDescription = "Download")
+                        }
                     }
-                    IconButton(onClick = { }) {
+                    IconButton(
+                        onClick = { viewModel.shareFile(context) },
+                        enabled = !uiState.isDownloading
+                    ) {
                         Icon(Icons.Filled.Share, contentDescription = "Share")
                     }
                     if (file != null && (file.isImage || file.isVideo)) {
@@ -117,6 +131,32 @@ fun MediaViewerScreen(
                 file.isArchive -> ArchiveContent(file)
                 else -> UnsupportedContent(file)
             }
+        }
+    }
+
+    uiState.errorMessage?.let { msg ->
+        Snackbar(
+            modifier = Modifier.padding(16.dp),
+            action = {
+                TextButton(onClick = { viewModel.clearError() }) {
+                    Text("Dismiss")
+                }
+            }
+        ) {
+            Text(msg)
+        }
+    }
+
+    uiState.successMessage?.let { msg ->
+        Snackbar(
+            modifier = Modifier.padding(16.dp),
+            action = {
+                TextButton(onClick = { viewModel.clearSuccess() }) {
+                    Text("OK")
+                }
+            }
+        ) {
+            Text(msg)
         }
     }
 }
@@ -394,7 +434,7 @@ private fun TextContent(file: VaultFile) {
             .padding(16.dp)
     ) {
         Text(
-            text = "Loading content...",
+            text = "Text file: ${file.name}",
             style = MaterialTheme.typography.bodyLarge.copy(
                 fontFamily = FontFamily.Monospace
             ),
@@ -409,10 +449,24 @@ private fun PdfContent() {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Button(onClick = { }) {
-            Icon(Icons.Filled.PictureAsPdf, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("View PDF")
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                Icons.Filled.PictureAsPdf,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(Modifier.height(16.dp))
+            Text(
+                "PDF Viewer",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "PDF viewing will be available in a future update",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -551,11 +605,11 @@ private fun ArchiveContent(file: VaultFile) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(24.dp))
-            FilledTonalButton(onClick = { }) {
-                Icon(Icons.Filled.Unarchive, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Extract")
-            }
+            Text(
+                "Archive extraction will be available in a future update",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

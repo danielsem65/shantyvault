@@ -35,7 +35,7 @@ interface VaultRepository {
     fun searchNotes(query: String): Flow<List<Note>>
     suspend fun getNoteById(id: String): Note?
     suspend fun createNote(title: String, content: String): Result<Note>
-    suspend fun updateNote(id: String, title: String?, content: String?, isPinned: Boolean?): Result<Unit>
+    suspend fun updateNote(id: String, title: String?, content: String?, isPinned: Boolean?, colorHex: String? = null): Result<Unit>
     suspend fun deleteNote(id: String): Result<Unit>
     suspend fun toggleNotePinned(id: String): Result<Unit>
 

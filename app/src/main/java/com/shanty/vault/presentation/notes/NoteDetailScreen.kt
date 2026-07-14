@@ -123,9 +123,9 @@ fun NoteDetailScreen(
                 presetColors.forEach { color ->
                     val circleColor = color ?: MaterialTheme.colorScheme.surfaceVariant
                     val isSelected = if (color == null) {
-                        uiState.note?.colorHex.isNullOrEmpty()
+                        uiState.colorHex.isNullOrEmpty()
                     } else {
-                        uiState.note?.colorHex == String.format("#%06X", 0xFFFFFF and color.toArgb())
+                        uiState.colorHex == String.format("#%06X", 0xFFFFFF and color.toArgb())
                     }
                     Box(
                         modifier = Modifier
@@ -133,7 +133,12 @@ fun NoteDetailScreen(
                             .clip(CircleShape)
                             .background(circleColor)
                             .clickable {
-                                viewModel.updateTitle(uiState.title)
+                                val colorHex = if (color == null) {
+                                    null
+                                } else {
+                                    String.format("#%06X", 0xFFFFFF and color.toArgb())
+                                }
+                                viewModel.updateNoteColor(colorHex)
                             },
                         contentAlignment = Alignment.Center
                     ) {

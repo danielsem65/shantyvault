@@ -18,7 +18,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun VerifyEmailScreen(
     onVerified: () -> Unit,
-    onNavigateToLogin: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val authState by viewModel.authState.collectAsState()

@@ -1,26 +1,25 @@
 package com.shanty.vault.data.repository
 
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
-import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.shanty.vault.data.local.UserPreferences
-import com.shanty.vault.data.remote.ApiService
 import com.shanty.vault.domain.model.User
 import com.shanty.vault.domain.repository.AuthRepository
 import com.shanty.vault.security.TokenManager
 import com.shanty.vault.util.Constants
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.user.UserInfo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.tasks.await
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
-    private val firebaseAuth: FirebaseAuth,
-    private val apiService: ApiService,
+    private val supabaseClient: SupabaseClient,
     private val tokenManager: TokenManager,
     private val userPreferences: UserPreferences
 ) : AuthRepository {
@@ -37,12 +36,19 @@ class AuthRepositoryImpl @Inject constructor(
     private var loginAttempts = mutableMapOf<String, MutableList<Long>>()
 
     init {
-        firebaseAuth.addAuthStateListener { auth ->
-            val firebaseUser = auth.currentUser
-            if (firebaseUser != null) {
-                _isAuthenticated.value = true
-            } else {
-                _currentUser.value = null
+        checkSession()
+    }
+
+    private fun checkSession() {
+        kotlinx.coroutines.runBlocking {
+            try {
+                val session = supabaseClient.auth.currentSessionOrNull()
+                if (session != null) {
+                    val user = session.user
+                    _currentUser.value = user.toDomainUser()
+                    _isAuthenticated.value = true
+                }
+            } catch (_: Exception) {
                 _isAuthenticated.value = false
             }
         }
@@ -54,85 +60,76 @@ class AuthRepositoryImpl @Inject constructor(
                 return Result.failure(Exception("Too many login attempts. Please try again later."))
             }
 
-            val authResult = firebaseAuth.signInWithEmailAndPassword(email, password).await()
-            val firebaseUser = authResult.user ?: throw Exception("Authentication failed")
-
-            if (!firebaseUser.isEmailVerified) {
-                firebaseAuth.signOut()
-                return Result.failure(Exception("Please verify your email before logging in."))
+            supabaseClient.auth.signInWith(Email) {
+                this.email = email
+                this.password = password
             }
 
-            val idToken = firebaseUser.getIdToken(true).await().token ?: ""
-            tokenManager.saveToken(Constants.KEY_ACCESS_TOKEN, idToken)
-            userPreferences.setUserId(firebaseUser.uid)
+            val session = supabaseClient.auth.currentSessionOrNull()
+                ?: throw Exception("Authentication failed")
+            val user = session.user
+
+            val accessToken = session.accessToken
+            tokenManager.saveToken(Constants.KEY_ACCESS_TOKEN, accessToken)
+            userPreferences.setUserId(user.id)
             userPreferences.updateLastActivity()
             userPreferences.setFirstLogin(false)
 
-            val user = User(
-                id = firebaseUser.uid,
-                email = firebaseUser.email ?: "",
-                name = firebaseUser.displayName ?: "",
-                isEmailVerified = firebaseUser.isEmailVerified,
-                isMfaEnabled = false,
-                storageUsed = 0L,
-                storageLimit = 5L * 1024 * 1024 * 1024,
-                createdAt = firebaseUser.metadata?.creationTimestamp ?: System.currentTimeMillis()
-            )
-            _currentUser.value = user
+            val domainUser = user.toDomainUser()
+            _currentUser.value = domainUser
+            _isAuthenticated.value = true
             loginAttempts.remove(email.lowercase())
-            Result.success(user)
-        } catch (e: FirebaseAuthInvalidCredentialsException) {
-            recordLoginAttempt(email)
-            Result.failure(Exception("Invalid email or password."))
-        } catch (e: FirebaseAuthWeakPasswordException) {
-            Result.failure(Exception("Password is too weak."))
-        } catch (e: FirebaseAuthUserCollisionException) {
-            Result.failure(Exception("An account with this email already exists."))
+            Result.success(domainUser)
         } catch (e: Exception) {
-            Result.failure(e)
+            recordLoginAttempt(email)
+            Result.failure(Exception(mapSupabaseError(e)))
         }
     }
 
     override suspend fun register(email: String, password: String, name: String): Result<User> {
         return try {
-            val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-            val firebaseUser = authResult.user ?: throw Exception("Registration failed")
+            supabaseClient.auth.signUpWith(Email) {
+                this.email = email
+                this.password = password
+                data = buildJsonObject {
+                    put("name", name)
+                }
+            }
 
-            val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
-                .setDisplayName(name)
-                .build()
-            firebaseUser.updateProfile(profileUpdates).await()
-            firebaseUser.sendEmailVerification().await()
-
-            firebaseAuth.signOut()
+            val user = supabaseClient.auth.currentUserOrNull()
 
             Result.success(User(
-                id = firebaseUser.uid,
+                id = user?.id ?: "",
                 email = email,
                 name = name,
-                isEmailVerified = false,
+                isEmailVerified = user?.emailConfirmedAt != null,
                 isMfaEnabled = false,
                 storageUsed = 0L,
                 storageLimit = 5L * 1024 * 1024 * 1024,
                 createdAt = System.currentTimeMillis()
             ))
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(mapSupabaseError(e)))
         }
     }
 
     override suspend fun logout() {
-        firebaseAuth.signOut()
+        try {
+            supabaseClient.auth.signOut()
+        } catch (_: Exception) { }
         tokenManager.clearAllTokens()
         _currentUser.value = null
         _isSessionExpired.value = false
+        _isAuthenticated.value = false
         userPreferences.clearAll()
     }
 
     override suspend fun refreshToken(): Result<String> {
         return try {
-            val user = firebaseAuth.currentUser ?: throw Exception("Not authenticated")
-            val token = user.getIdToken(true).await().token ?: throw Exception("Failed to refresh token")
+            val session = supabaseClient.auth.currentSessionOrNull()
+                ?: throw Exception("Not authenticated")
+            val newSession = supabaseClient.auth.refreshSession(session.refreshToken)
+            val token = newSession.accessToken
             tokenManager.saveToken(Constants.KEY_ACCESS_TOKEN, token)
             Result.success(token)
         } catch (e: Exception) {
@@ -142,12 +139,12 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun verifyEmail(code: String): Result<Unit> {
         return try {
-            firebaseAuth.currentUser?.apply {
-                if (isEmailVerified) return Result.success(Unit)
-                reload().await()
-                if (isEmailVerified) Result.success(Unit)
-                else Result.failure(Exception("Email not yet verified."))
-            } ?: Result.failure(Exception("No user logged in."))
+            val user = supabaseClient.auth.currentUserOrNull()
+            if (user?.emailConfirmedAt != null) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Email not yet verified. Please check your inbox."))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -155,7 +152,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun resetPassword(email: String): Result<Unit> {
         return try {
-            firebaseAuth.sendPasswordResetEmail(email).await()
+            supabaseClient.auth.resetPasswordForEmail(email)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -164,12 +161,9 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit> {
         return try {
-            val user = firebaseAuth.currentUser ?: throw Exception("Not authenticated")
-            val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(
-                user.email ?: "", currentPassword
-            )
-            user.reauthenticate(credential).await()
-            user.updatePassword(newPassword).await()
+            supabaseClient.auth.updateUser {
+                password = newPassword
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -222,7 +216,16 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun authenticateWithBiometric(): Result<Unit> {
-        return Result.failure(Exception("Biometric not configured"))
+        return try {
+            val session = supabaseClient.auth.currentSessionOrNull()
+            if (session != null) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("No active session. Please log in with your password."))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Biometric authentication not available. Please log in with your password."))
+        }
     }
 
     override suspend fun isTrustedDevice(): Boolean {
@@ -245,5 +248,28 @@ class AuthRepositoryImpl @Inject constructor(
         val attempts = loginAttempts.getOrDefault(key, mutableListOf())
         attempts.add(System.currentTimeMillis())
         loginAttempts[key] = attempts
+    }
+
+    private fun UserInfo.toDomainUser() = User(
+        id = id,
+        email = email ?: "",
+        name = userMetadata?.get("name")?.toString()?.removeSurrounding("\"") ?: "",
+        isEmailVerified = emailConfirmedAt != null,
+        isMfaEnabled = false,
+        storageUsed = 0L,
+        storageLimit = 5L * 1024 * 1024 * 1024,
+        createdAt = createdAt?.toEpochMilliseconds() ?: System.currentTimeMillis()
+    )
+
+    private fun mapSupabaseError(e: Exception): String {
+        val message = e.message?.lowercase() ?: return "An error occurred"
+        return when {
+            "invalid login credentials" in message -> "Invalid email or password."
+            "email already registered" in message || "user already registered" in message -> "An account with this email already exists."
+            "password should be at least" in message -> "Password is too weak."
+            "email not confirmed" in message -> "Please verify your email before logging in."
+            "rate limit" in message -> "Too many attempts. Please try again later."
+            else -> e.message ?: "An error occurred"
+        }
     }
 }

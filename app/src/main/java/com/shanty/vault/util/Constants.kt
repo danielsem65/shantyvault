@@ -3,7 +3,11 @@ package com.shanty.vault.util
 object Constants {
     const val APP_NAME = "Shanty Vault"
     const val BASE_URL = "https://api.shantyvault.com/"
-    const val STORAGE_BUCKET = "shanty-vault.appspot.com"
+
+    // Supabase configuration - Replace with your Supabase project values
+    const val SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co"
+    const val SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"
+    const val SUPABASE_STORAGE_BUCKET = "vault-files"
 
     const val DB_NAME = "shanty_vault.db"
     const val DATASTORE_NAME = "shanty_vault_prefs"

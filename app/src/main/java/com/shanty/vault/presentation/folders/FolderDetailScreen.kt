@@ -1,5 +1,8 @@
 package com.shanty.vault.presentation.folders
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -29,6 +33,20 @@ fun FolderDetailScreen(
     viewModel: FilesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            val cursor = context.contentResolver.query(it, null, null, null, null)
+            val nameIndex = cursor?.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+            cursor?.moveToFirst()
+            val fileName = nameIndex?.let { idx -> cursor?.getString(idx) } ?: "unknown_file"
+            cursor?.close()
+            viewModel.uploadFileUri(context, it, fileName)
+        }
+    }
 
     LaunchedEffect(folderId) {
         viewModel.navigateToFolder(folderId)
@@ -49,12 +67,32 @@ fun FolderDetailScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { }) {
+            FloatingActionButton(onClick = {
+                filePickerLauncher.launch(arrayOf(
+                    "image/*", "video/*", "application/pdf",
+                    "text/*", "audio/*", "application/zip",
+                    "application/x-rar-compressed", "application/x-tar",
+                    "application/gzip", "application/x-7z-compressed"
+                ))
+            }) {
                 Icon(Icons.Filled.Upload, contentDescription = "Upload")
             }
         }
     ) { paddingValues ->
-        if (uiState.isLoading && uiState.folders.isEmpty() && uiState.files.isEmpty()) {
+        if (uiState.isUploading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Spacer(Modifier.height(16.dp))
+                    Text(uiState.uploadProgress, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        } else if (uiState.isLoading && uiState.folders.isEmpty() && uiState.files.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

@@ -1,19 +1,19 @@
 package com.shanty.vault.data.repository
 
-import com.google.firebase.storage.FirebaseStorage
 import com.shanty.vault.data.local.*
 import com.shanty.vault.data.model.*
 import com.shanty.vault.domain.model.*
 import com.shanty.vault.domain.repository.VaultRepository
 import com.shanty.vault.security.EncryptionManager
 import com.shanty.vault.util.Constants
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.storage.storage
+import io.github.jan.supabase.storage.uploadAsPublic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -25,7 +25,7 @@ class VaultRepositoryImpl @Inject constructor(
     private val noteDao: NoteDao,
     private val activityDao: ActivityDao,
     private val encryptionManager: EncryptionManager,
-    private val firebaseStorage: FirebaseStorage
+    private val supabaseClient: SupabaseClient
 ) : VaultRepository {
 
     override fun getAllFiles(): Flow<List<VaultFile>> =
@@ -49,13 +49,17 @@ class VaultRepositoryImpl @Inject constructor(
 
     override suspend fun uploadFile(file: File, folderId: String?): Result<VaultFile> {
         return try {
+            val userId = getUserId()
             val fileId = UUID.randomUUID().toString()
-            val remotePath = "users/${getUserId()}/files/$fileId/${file.name}"
-            val storageRef = firebaseStorage.getReference(remotePath)
-            val uploadTask = storageRef.putFile(android.net.Uri.fromFile(file)).await()
-            val downloadUrl = storageRef.downloadUrl.await().toString()
+            val remotePath = "$userId/files/$fileId/${file.name}"
+            val bucket = supabaseClient.storage.from(Constants.SUPABASE_STORAGE_BUCKET)
 
-            val checksum = file.inputStream().use { it.readBytes().sha256() }
+            val fileBytes = file.readBytes()
+            bucket.uploadAsPublic(remotePath, fileBytes)
+
+            val publicUrl = bucket.getPublicUrl(remotePath)
+
+            val checksum = fileBytes.sha256()
 
             val vaultFile = VaultFile(
                 id = fileId,
@@ -64,7 +68,7 @@ class VaultRepositoryImpl @Inject constructor(
                 mimeType = getMimeType(file.name),
                 size = file.length(),
                 folderId = folderId,
-                remotePath = downloadUrl,
+                remotePath = publicUrl,
                 localPath = file.absolutePath,
                 thumbnailPath = null,
                 isFavorite = false,
@@ -89,17 +93,21 @@ class VaultRepositoryImpl @Inject constructor(
             val tempFile = File(file.parent, "enc_${file.name}")
             tempFile.writeBytes(encryptedData)
 
+            val userId = getUserId()
             val fileId = UUID.randomUUID().toString()
-            val remotePath = "users/${getUserId()}/files/$fileId/${file.name}.enc"
-            val storageRef = firebaseStorage.getReference(remotePath)
-            storageRef.putFile(android.net.Uri.fromFile(tempFile)).await()
-            val downloadUrl = storageRef.downloadUrl.await().toString()
+            val remotePath = "$userId/files/$fileId/${file.name}.enc"
+            val bucket = supabaseClient.storage.from(Constants.SUPABASE_STORAGE_BUCKET)
+
+            val encryptedBytes = tempFile.readBytes()
+            bucket.uploadAsPublic(remotePath, encryptedBytes)
+
+            val publicUrl = bucket.getPublicUrl(remotePath)
             tempFile.delete()
 
             val vaultFile = VaultFile(
                 id = fileId, name = file.name, extension = file.extension,
                 mimeType = getMimeType(file.name), size = file.length(),
-                folderId = folderId, remotePath = downloadUrl,
+                folderId = folderId, remotePath = publicUrl,
                 localPath = null, thumbnailPath = null,
                 isFavorite = false, createdAt = System.currentTimeMillis(),
                 updatedAt = System.currentTimeMillis(), uploadedAt = System.currentTimeMillis(),
@@ -115,11 +123,21 @@ class VaultRepositoryImpl @Inject constructor(
 
     override suspend fun downloadFile(fileId: String, destination: File): Result<String> {
         return try {
-            val entity = vaultFileDao.getFileById(fileId) ?: return Result.failure(Exception("File not found"))
-            val localRef = firebaseStorage.getReferenceFromUrl(entity.remotePath)
-            localRef.getFile(android.net.Uri.fromFile(destination)).await()
+            val entity = vaultFileDao.getFileById(fileId)
+                ?: return Result.failure(Exception("File not found"))
 
-            vaultFileDao.updateFile(entity.copy(localPath = destination.absolutePath, downloadedAt = System.currentTimeMillis()))
+            val userId = getUserId()
+            val remotePath = "$userId/files/$fileId/${entity.name}"
+            val bucket = supabaseClient.storage.from(Constants.SUPABASE_STORAGE_BUCKET)
+
+            val fileBytes = bucket.downloadPublic(remotePath)
+            destination.parentFile?.mkdirs()
+            destination.writeBytes(fileBytes)
+
+            vaultFileDao.updateFile(entity.copy(
+                localPath = destination.absolutePath,
+                downloadedAt = System.currentTimeMillis()
+            ))
 
             logActivity(Activity.ActivityType.DOWNLOAD, "Downloaded ${entity.name}", fileId, entity.name)
             Result.success(destination.absolutePath)
@@ -130,7 +148,17 @@ class VaultRepositoryImpl @Inject constructor(
 
     override suspend fun deleteFile(fileId: String): Result<Unit> {
         return try {
-            val entity = vaultFileDao.getFileById(fileId) ?: return Result.failure(Exception("File not found"))
+            val entity = vaultFileDao.getFileById(fileId)
+                ?: return Result.failure(Exception("File not found"))
+
+            val userId = getUserId()
+            val remotePath = "$userId/files/$fileId/${entity.name}"
+            val bucket = supabaseClient.storage.from(Constants.SUPABASE_STORAGE_BUCKET)
+
+            try {
+                bucket.remove(listOf(remotePath))
+            } catch (_: Exception) { }
+
             vaultFileDao.softDeleteFile(fileId)
             logActivity(Activity.ActivityType.DELETE, "Deleted ${entity.name}", fileId, entity.name)
             Result.success(Unit)
@@ -152,6 +180,7 @@ class VaultRepositoryImpl @Inject constructor(
     override suspend fun moveFile(fileId: String, newFolderId: String?): Result<Unit> {
         return try {
             vaultFileDao.moveFile(fileId, newFolderId)
+            logActivity(Activity.ActivityType.MOVE, "Moved file", fileId, null)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -197,6 +226,7 @@ class VaultRepositoryImpl @Inject constructor(
     override suspend fun renameFolder(folderId: String, newName: String): Result<Unit> {
         return try {
             folderDao.renameFolder(folderId, newName)
+            logActivity(Activity.ActivityType.RENAME, "Renamed folder to $newName", folderId, newName)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -216,9 +246,11 @@ class VaultRepositoryImpl @Inject constructor(
 
     override suspend fun moveFolder(folderId: String, newParentId: String?): Result<Unit> {
         return try {
-            val folder = folderDao.getFolderById(folderId) ?: return Result.failure(Exception("Folder not found"))
+            val folder = folderDao.getFolderById(folderId)
+                ?: return Result.failure(Exception("Folder not found"))
             val newPath = buildPath(newParentId, folder.name)
             folderDao.moveFolder(folderId, newParentId, newPath)
+            logActivity(Activity.ActivityType.MOVE, "Moved folder ${folder.name}", folderId, folder.name)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -262,14 +294,16 @@ class VaultRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateNote(id: String, title: String?, content: String?, isPinned: Boolean?): Result<Unit> {
+    override suspend fun updateNote(id: String, title: String?, content: String?, isPinned: Boolean?, colorHex: String?): Result<Unit> {
         return try {
-            val existing = noteDao.getNoteById(id) ?: return Result.failure(Exception("Note not found"))
+            val existing = noteDao.getNoteById(id)
+                ?: return Result.failure(Exception("Note not found"))
             val encryptedContent = if (content != null) encryptionManager.encryptString(content) else existing.content
             noteDao.updateNote(existing.copy(
                 title = title ?: existing.title,
                 content = encryptedContent,
                 isPinned = isPinned ?: existing.isPinned,
+                colorHex = colorHex ?: existing.colorHex,
                 updatedAt = System.currentTimeMillis()
             ))
             Result.success(Unit)
@@ -301,7 +335,11 @@ class VaultRepositoryImpl @Inject constructor(
 
     override suspend fun getStorageUsage(): Flow<StorageUsage> {
         return vaultFileDao.getTotalStorageUsed().map { used ->
-            StorageUsage(used = used, limit = 5L * 1024 * 1024 * 1024, percentUsed = if (used > 0) (used.toDouble() / (5L * 1024 * 1024 * 1024)) * 100 else 0.0)
+            StorageUsage(
+                used = used,
+                limit = 5L * 1024 * 1024 * 1024,
+                percentUsed = if (used > 0) (used.toDouble() / (5L * 1024 * 1024 * 1024)) * 100 else 0.0
+            )
         }
     }
 
@@ -313,7 +351,12 @@ class VaultRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun logActivity(type: Activity.ActivityType, description: String, itemId: String?, itemName: String?) {
+    private suspend fun logActivity(
+        type: Activity.ActivityType,
+        description: String,
+        itemId: String?,
+        itemName: String?
+    ) {
         val activity = Activity(
             id = UUID.randomUUID().toString(), type = type, description = description,
             itemId = itemId, itemName = itemName, timestamp = System.currentTimeMillis()
@@ -321,8 +364,12 @@ class VaultRepositoryImpl @Inject constructor(
         activityDao.insertActivity(activity.toEntity())
     }
 
-    private fun getUserId(): String {
-        return "user_placeholder"
+    private suspend fun getUserId(): String {
+        return try {
+            supabaseClient.auth.currentUserOrNull()?.id ?: "unknown_user"
+        } catch (_: Exception) {
+            "unknown_user"
+        }
     }
 
     private suspend fun buildPath(parentId: String?, folderName: String): String {

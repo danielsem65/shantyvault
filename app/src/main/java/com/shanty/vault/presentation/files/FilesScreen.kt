@@ -1,5 +1,8 @@
 package com.shanty.vault.presentation.files
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -16,12 +19,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.shanty.vault.domain.model.Folder
 import com.shanty.vault.domain.model.VaultFile
 import java.text.SimpleDateFormat
@@ -36,6 +38,20 @@ fun FilesScreen(
     onNavigateToSearch: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            val cursor = context.contentResolver.query(it, null, null, null, null)
+            val nameIndex = cursor?.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+            cursor?.moveToFirst()
+            val fileName = nameIndex?.let { idx -> cursor?.getString(idx) } ?: "unknown_file"
+            cursor?.close()
+            viewModel.uploadFileUri(context, it, fileName)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -55,22 +71,45 @@ fun FilesScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { }) {
-                Icon(Icons.Filled.Upload, contentDescription = "Upload")
+            Column(horizontalAlignment = Alignment.End) {
+                SmallFloatingActionButton(
+                    onClick = { viewModel.requestCreateFolder() },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Icon(Icons.Filled.CreateNewFolder, contentDescription = "New Folder")
+                }
+                Spacer(Modifier.height(8.dp))
+                FloatingActionButton(onClick = {
+                    filePickerLauncher.launch(arrayOf(
+                        "image/*", "video/*", "application/pdf",
+                        "text/*", "audio/*", "application/zip",
+                        "application/x-rar-compressed", "application/x-tar",
+                        "application/gzip", "application/x-7z-compressed"
+                    ))
+                }) {
+                    Icon(Icons.Filled.Upload, contentDescription = "Upload")
+                }
             }
         }
     ) { paddingValues ->
-        SwipeRefresh(
-            state = rememberSwipeRefreshState(uiState.isLoading),
-            onRefresh = { viewModel.refresh() },
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
+        if (uiState.isUploading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Spacer(Modifier.height(16.dp))
+                    Text(uiState.uploadProgress, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        } else {
             if (uiState.isLoading && uiState.files.isEmpty() && uiState.folders.isEmpty()) {
-                ShimmerLoadingState()
+                ShimmerLoadingState(modifier = Modifier.padding(paddingValues))
             } else if (uiState.folders.isEmpty() && uiState.files.isEmpty()) {
-                EmptyState()
+                EmptyState(modifier = Modifier.padding(paddingValues))
             } else {
                 if (uiState.isGridMode) {
                     GridContent(
@@ -83,7 +122,8 @@ fun FilesScreen(
                         onFileClick = { file -> onNavigateToFile(file.id) },
                         onFileLongClick = { viewModel.requestDeleteFile(it) },
                         onToggleFavorite = { viewModel.toggleFavorite(it.id) },
-                        viewModel = viewModel
+                        viewModel = viewModel,
+                        modifier = Modifier.padding(paddingValues)
                     )
                 } else {
                     ListContent(
@@ -96,7 +136,8 @@ fun FilesScreen(
                         onFileClick = { file -> onNavigateToFile(file.id) },
                         onFileLongClick = { viewModel.requestDeleteFile(it) },
                         onToggleFavorite = { viewModel.toggleFavorite(it.id) },
-                        viewModel = viewModel
+                        viewModel = viewModel,
+                        modifier = Modifier.padding(paddingValues)
                     )
                 }
             }
@@ -120,6 +161,84 @@ fun FilesScreen(
             }
         )
     }
+
+    if (uiState.showRenameDialog && uiState.fileToRename != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.cancelRename() },
+            title = { Text("Rename File") },
+            text = {
+                OutlinedTextField(
+                    value = uiState.renameValue,
+                    onValueChange = { viewModel.updateRenameValue(it) },
+                    label = { Text("File name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.confirmRename() }) {
+                    Text("Rename")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.cancelRename() }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (uiState.showCreateFolderDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.cancelCreateFolder() },
+            title = { Text("Create Folder") },
+            text = {
+                OutlinedTextField(
+                    value = uiState.newFolderName,
+                    onValueChange = { viewModel.updateNewFolderName(it) },
+                    label = { Text("Folder name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.confirmCreateFolder() }) {
+                    Text("Create")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.cancelCreateFolder() }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    uiState.errorMessage?.let { msg ->
+        Snackbar(
+            modifier = Modifier.padding(16.dp),
+            action = {
+                TextButton(onClick = { viewModel.clearError() }) {
+                    Text("Dismiss")
+                }
+            }
+        ) {
+            Text(msg)
+        }
+    }
+
+    uiState.successMessage?.let { msg ->
+        Snackbar(
+            modifier = Modifier.padding(16.dp),
+            action = {
+                TextButton(onClick = { viewModel.clearSuccess() }) {
+                    Text("OK")
+                }
+            }
+        ) {
+            Text(msg)
+        }
+    }
 }
 
 @Composable
@@ -130,13 +249,15 @@ private fun GridContent(
     onFileClick: (VaultFile) -> Unit,
     onFileLongClick: (VaultFile) -> Unit,
     onToggleFavorite: (VaultFile) -> Unit,
-    viewModel: FilesViewModel
+    viewModel: FilesViewModel,
+    modifier: Modifier = Modifier
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 140.dp),
         contentPadding = PaddingValues(12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier
     ) {
         items(folders, key = { it.id }) { folder ->
             FolderGridCard(folder = folder, onClick = { onFolderClick(folder) })
@@ -160,11 +281,13 @@ private fun ListContent(
     onFileClick: (VaultFile) -> Unit,
     onFileLongClick: (VaultFile) -> Unit,
     onToggleFavorite: (VaultFile) -> Unit,
-    viewModel: FilesViewModel
+    viewModel: FilesViewModel,
+    modifier: Modifier = Modifier
 ) {
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = modifier
     ) {
         if (folders.isNotEmpty()) {
             item {
@@ -193,7 +316,8 @@ private fun ListContent(
                     file = file,
                     onClick = { onFileClick(file) },
                     onLongClick = { onFileLongClick(file) },
-                    onToggleFavorite = { onToggleFavorite(file) }
+                    onToggleFavorite = { onToggleFavorite(file) },
+                    viewModel = viewModel
                 )
             }
         }
@@ -387,7 +511,8 @@ private fun FileListRow(
     file: VaultFile,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    onToggleFavorite: () -> Unit
+    onToggleFavorite: () -> Unit,
+    viewModel: FilesViewModel
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
@@ -447,12 +572,18 @@ private fun FileListRow(
     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
         DropdownMenuItem(
             text = { Text("Rename") },
-            onClick = { showMenu = false },
+            onClick = {
+                viewModel.requestRenameFile(file)
+                showMenu = false
+            },
             leadingIcon = { Icon(Icons.Filled.DriveFileRenameOutline, null) }
         )
         DropdownMenuItem(
             text = { Text("Move") },
-            onClick = { showMenu = false },
+            onClick = {
+                viewModel.requestMoveFile(file)
+                showMenu = false
+            },
             leadingIcon = { Icon(Icons.Filled.DriveFileMove, null) }
         )
         DropdownMenuItem(
@@ -504,10 +635,11 @@ private fun FileTypeIcon(file: VaultFile, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ShimmerLoadingState() {
+private fun ShimmerLoadingState(modifier: Modifier = Modifier) {
     LazyColumn(
         contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier
     ) {
         items(8) {
             Card(
@@ -560,9 +692,9 @@ private fun ShimmerLoadingState() {
 }
 
 @Composable
-private fun EmptyState() {
+private fun EmptyState(modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {

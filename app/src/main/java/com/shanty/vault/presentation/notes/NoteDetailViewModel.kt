@@ -14,6 +14,7 @@ data class NoteDetailUiState(
     val title: String = "",
     val content: String = "",
     val isPinned: Boolean = false,
+    val colorHex: String? = null,
     val isSaving: Boolean = false,
     val isLoading: Boolean = true
 )
@@ -32,7 +33,8 @@ class NoteDetailViewModel @Inject constructor(
             val note = vaultRepository.getNoteById(noteId)
             if (note != null) {
                 _uiState.update {
-                    it.copy(note = note, title = note.title, content = note.content, isPinned = note.isPinned, isLoading = false)
+                    it.copy(note = note, title = note.title, content = note.content,
+                        isPinned = note.isPinned, colorHex = note.colorHex, isLoading = false)
                 }
             } else {
                 _uiState.update { it.copy(isLoading = false) }
@@ -56,11 +58,22 @@ class NoteDetailViewModel @Inject constructor(
         _uiState.update { it.copy(isPinned = !it.isPinned) }
     }
 
+    fun updateNoteColor(colorHex: String?) {
+        _uiState.update { it.copy(colorHex = colorHex) }
+        scheduleSave()
+    }
+
     fun save() {
         val note = _uiState.value.note ?: return
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
-            vaultRepository.updateNote(note.id, _uiState.value.title, _uiState.value.content, _uiState.value.isPinned)
+            vaultRepository.updateNote(
+                note.id,
+                _uiState.value.title,
+                _uiState.value.content,
+                _uiState.value.isPinned,
+                _uiState.value.colorHex
+            )
             _uiState.update { it.copy(isSaving = false) }
         }
     }

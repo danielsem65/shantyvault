@@ -3,7 +3,6 @@ package com.shanty.vault.presentation.settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
@@ -16,17 +15,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    var themeMode by remember { mutableStateOf("system") }
-    var biometricsEnabled by remember { mutableStateOf(false) }
-    var mfaEnabled by remember { mutableStateOf(false) }
-    var notificationsEnabled by remember { mutableStateOf(true) }
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -50,8 +48,8 @@ fun SettingsScreen(
             }
             item {
                 ThemeSelector(
-                    selectedTheme = themeMode,
-                    onThemeSelected = { themeMode = it }
+                    selectedTheme = uiState.themeMode,
+                    onThemeSelected = { viewModel.setThemeMode(it) }
                 )
             }
 
@@ -64,7 +62,7 @@ fun SettingsScreen(
                 SettingsRow(
                     icon = { Icon(Icons.Outlined.Lock, null) },
                     title = "Change Password",
-                    onClick = { }
+                    onClick = { viewModel.showChangePasswordDialog() }
                 )
             }
             item {
@@ -73,11 +71,11 @@ fun SettingsScreen(
                     title = "Enable Biometrics",
                     trailing = {
                         Switch(
-                            checked = biometricsEnabled,
-                            onCheckedChange = { biometricsEnabled = it }
+                            checked = uiState.biometricsEnabled,
+                            onCheckedChange = { viewModel.toggleBiometrics() }
                         )
                     },
-                    onClick = { biometricsEnabled = !biometricsEnabled }
+                    onClick = { viewModel.toggleBiometrics() }
                 )
             }
             item {
@@ -86,19 +84,11 @@ fun SettingsScreen(
                     title = "Enable MFA",
                     trailing = {
                         Switch(
-                            checked = mfaEnabled,
-                            onCheckedChange = { mfaEnabled = it }
+                            checked = uiState.mfaEnabled,
+                            onCheckedChange = { viewModel.toggleMfa() }
                         )
                     },
-                    onClick = { mfaEnabled = !mfaEnabled }
-                )
-            }
-            item {
-                SettingsRow(
-                    icon = { Icon(Icons.Outlined.Devices, null) },
-                    title = "Manage Sessions",
-                    subtitle = "2 active sessions",
-                    onClick = { }
+                    onClick = { viewModel.toggleMfa() }
                 )
             }
 
@@ -108,10 +98,12 @@ fun SettingsScreen(
                 SectionHeader("PRIVACY")
             }
             item {
+                val usedGb = uiState.storageUsed / (1024.0 * 1024.0 * 1024.0)
+                val limitGb = uiState.storageLimit / (1024.0 * 1024.0 * 1024.0)
                 SettingsRow(
                     icon = { Icon(Icons.Outlined.Storage, null) },
                     title = "Storage Usage",
-                    subtitle = "2.4 GB / 15 GB used",
+                    subtitle = "%.1f GB / %d GB used".format(usedGb, limitGb.toInt()),
                     onClick = { }
                 )
             }
@@ -121,11 +113,11 @@ fun SettingsScreen(
                     title = "Notification Preferences",
                     trailing = {
                         Switch(
-                            checked = notificationsEnabled,
-                            onCheckedChange = { notificationsEnabled = it }
+                            checked = uiState.notificationsEnabled,
+                            onCheckedChange = { viewModel.toggleNotifications() }
                         )
                     },
-                    onClick = { notificationsEnabled = !notificationsEnabled }
+                    onClick = { viewModel.toggleNotifications() }
                 )
             }
 
@@ -144,8 +136,8 @@ fun SettingsScreen(
             item {
                 SettingsRow(
                     icon = { Icon(Icons.Outlined.ContactSupport, null) },
-                    title = "About",
-                    onClick = { }
+                    title = "About Shanty Vault",
+                    onClick = { viewModel.showAboutDialog() }
                 )
             }
 
@@ -167,6 +159,104 @@ fun SettingsScreen(
                 }
                 Spacer(Modifier.height(24.dp))
             }
+        }
+    }
+
+    if (uiState.showChangePasswordDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.hideChangePasswordDialog() },
+            title = { Text("Change Password") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = uiState.currentPassword,
+                        onValueChange = { viewModel.updateCurrentPassword(it) },
+                        label = { Text("Current Password") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = uiState.newPassword,
+                        onValueChange = { viewModel.updateNewPassword(it) },
+                        label = { Text("New Password") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = uiState.confirmPassword,
+                        onValueChange = { viewModel.updateConfirmPassword(it) },
+                        label = { Text("Confirm New Password") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.changePassword() }) {
+                    Text("Change")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.hideChangePasswordDialog() }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (uiState.showAboutDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.hideAboutDialog() },
+            title = { Text("About Shanty Vault") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Shanty Vault",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Version 1.0.0",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    HorizontalDivider()
+                    Text(
+                        "A secure personal cloud vault for private, encrypted cloud storage. Upload, organize, and access your files from anywhere with end-to-end encryption.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    HorizontalDivider()
+                    Text(
+                        "Features:",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text("• AES-256-GCM encrypted storage", style = MaterialTheme.typography.bodySmall)
+                    Text("• Biometric authentication", style = MaterialTheme.typography.bodySmall)
+                    Text("• Encrypted notes with color coding", style = MaterialTheme.typography.bodySmall)
+                    Text("• File organization with folders", style = MaterialTheme.typography.bodySmall)
+                    Text("• Built-in media viewer", style = MaterialTheme.typography.bodySmall)
+                    Text("• Dark mode support", style = MaterialTheme.typography.bodySmall)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.hideAboutDialog() }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+
+    uiState.message?.let { msg ->
+        Snackbar(
+            modifier = Modifier.padding(16.dp),
+            action = {
+                TextButton(onClick = { viewModel.clearMessage() }) {
+                    Text("OK")
+                }
+            }
+        ) {
+            Text(msg)
         }
     }
 }
