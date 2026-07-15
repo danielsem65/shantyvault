@@ -65,6 +65,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.activity:activity-compose:1.9.3")
 
+    // Pin browser to avoid requiring compileSdk 36 / AGP 8.9.1+
+    implementation("androidx.browser:browser") { version { strictly("1.8.0") } }
+
     // Compose UI
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
