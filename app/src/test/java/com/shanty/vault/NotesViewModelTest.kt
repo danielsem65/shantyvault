@@ -4,15 +4,17 @@ import app.cash.turbine.test
 import com.shanty.vault.domain.model.Note
 import com.shanty.vault.domain.repository.VaultRepository
 import com.shanty.vault.presentation.notes.NotesViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
-import org.mockito.kotlin.verify
+import org.mockito.kotlin.coVerify
 import org.mockito.kotlin.whenever
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class NotesViewModelTest {
 
     private lateinit var vaultRepository: VaultRepository
@@ -32,7 +34,7 @@ class NotesViewModelTest {
         )
         viewModel.createNote()
         advanceUntilIdle()
-        verify(vaultRepository).createNote("Untitled Note", "")
+        coVerify { vaultRepository.createNote("Untitled Note", "") }
     }
 
     @Test
@@ -40,7 +42,7 @@ class NotesViewModelTest {
         val viewModel = NotesViewModel(vaultRepository)
         viewModel.deleteNote("note_1")
         advanceUntilIdle()
-        verify(vaultRepository).deleteNote("note_1")
+        coVerify { vaultRepository.deleteNote("note_1") }
     }
 
     @Test
@@ -48,7 +50,7 @@ class NotesViewModelTest {
         val viewModel = NotesViewModel(vaultRepository)
         viewModel.togglePin("note_1")
         advanceUntilIdle()
-        verify(vaultRepository).toggleNotePinned("note_1")
+        coVerify { vaultRepository.toggleNotePinned("note_1") }
     }
 
     @Test

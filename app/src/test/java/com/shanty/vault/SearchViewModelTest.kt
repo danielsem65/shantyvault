@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.shanty.vault.domain.model.VaultFile
 import com.shanty.vault.domain.repository.VaultRepository
 import com.shanty.vault.presentation.search.SearchViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -11,19 +12,20 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.whenever
+
+@OptIn(ExperimentalCoroutinesApi::class)
 class SearchViewModelTest {
 
     private lateinit var vaultRepository: VaultRepository
-    private lateinit var viewModel: SearchViewModel
 
     @Before
     fun setup() {
         vaultRepository = mock()
-        viewModel = SearchViewModel(vaultRepository)
     }
 
     @Test
     fun `initial state is empty`() = runTest {
+        val viewModel = SearchViewModel(vaultRepository)
         viewModel.uiState.test {
             val state = awaitItem()
             assert(state.query.isEmpty())
@@ -35,6 +37,7 @@ class SearchViewModelTest {
 
     @Test
     fun `update query updates state`() = runTest {
+        val viewModel = SearchViewModel(vaultRepository)
         viewModel.updateQuery("test")
         val state = viewModel.uiState.value
         assert(state.query == "test")
@@ -42,6 +45,7 @@ class SearchViewModelTest {
 
     @Test
     fun `set filter updates state`() = runTest {
+        val viewModel = SearchViewModel(vaultRepository)
         viewModel.uiState.test {
             skipItems(1)
             viewModel.setFilter("images")
@@ -53,6 +57,7 @@ class SearchViewModelTest {
 
     @Test
     fun `empty query clears results`() = runTest {
+        val viewModel = SearchViewModel(vaultRepository)
         viewModel.updateQuery("")
         viewModel.uiState.test {
             val state = awaitItem()
@@ -64,6 +69,7 @@ class SearchViewModelTest {
 
     @Test
     fun `search with query calls repository`() = runTest {
+        val viewModel = SearchViewModel(vaultRepository)
         val mockFiles = listOf(
             VaultFile(
                 id = "1", name = "test.jpg", extension = "jpg", mimeType = "image/jpeg",
