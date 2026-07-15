@@ -32,7 +32,7 @@ data class VaultFile(
             if (this <= 0) return "0 B"
             val units = arrayOf("B", "KB", "MB", "GB", "TB")
             val digitGroups = (log10(this.toDouble()) / log10(1024.0)).toInt()
-            val size = this / pow(1024.0, digitGroups.toDouble())
+            val size = this.toDouble() / 1024.0.pow(digitGroups)
             return "%.1f %s".format(size, units[digitGroups])
         }
     }

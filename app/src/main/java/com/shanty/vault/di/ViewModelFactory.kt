@@ -24,6 +24,6 @@ class ViewModelFactory(private val container: AppContainer) : ViewModelProvider.
             modelClass.isAssignableFrom(SettingsViewModel::class.java) -> SettingsViewModel(container.userPreferences, container.authRepository, container.vaultRepository)
             modelClass.isAssignableFrom(MediaViewerViewModel::class.java) -> MediaViewerViewModel(container.vaultRepository)
             else -> throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
-        }
+        } as T
     }
 }

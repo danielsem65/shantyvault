@@ -96,10 +96,10 @@ class FilesViewModel(
                             successMessage = "${file.name} uploaded successfully")
                     }
                 },
-                onFailure = {
+                onFailure = { error ->
                     _uiState.update {
                         it.copy(isUploading = false, uploadProgress = "",
-                            errorMessage = "Failed to upload ${file.name}: ${it.message}")
+                            errorMessage = "Failed to upload ${file.name}: ${error.message}")
                     }
                 }
             )

@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package com.shanty.vault.data.repository
 
 import com.shanty.vault.data.local.UserPreferences
@@ -42,7 +44,7 @@ class AuthRepositoryImpl(
             try {
                 val session = supabaseClient.auth.currentSessionOrNull()
                 if (session != null) {
-                    val user = session.user
+                    val user = session.user!!
                     _currentUser.value = user.toDomainUser()
                     _isAuthenticated.value = true
                 }
@@ -65,7 +67,7 @@ class AuthRepositoryImpl(
 
             val session = supabaseClient.auth.currentSessionOrNull()
                 ?: throw Exception("Authentication failed")
-            val user = session.user
+            val user = session.user!!
 
             val accessToken = session.accessToken
             tokenManager.saveToken(Constants.KEY_ACCESS_TOKEN, accessToken)

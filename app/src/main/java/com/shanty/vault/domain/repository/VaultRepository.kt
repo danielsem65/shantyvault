@@ -44,8 +44,3 @@ interface VaultRepository {
     suspend fun syncAll(): Result<Unit>
 }
 
-data class StorageUsage(
-    val used: Long,
-    val limit: Long,
-    val percentUsed: Double
-)

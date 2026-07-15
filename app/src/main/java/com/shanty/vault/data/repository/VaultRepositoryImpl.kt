@@ -9,7 +9,6 @@ import com.shanty.vault.util.Constants
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.storage.storage
-import io.github.jan.supabase.storage.uploadAsPublic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
@@ -53,9 +52,9 @@ class VaultRepositoryImpl(
             val bucket = supabaseClient.storage.from(Constants.SUPABASE_STORAGE_BUCKET)
 
             val fileBytes = file.readBytes()
-            bucket.uploadAsPublic(remotePath, fileBytes)
+            bucket.upload(remotePath, fileBytes)
 
-            val publicUrl = bucket.getPublicUrl(remotePath)
+            val publicUrl = bucket.publicUrl(remotePath)
 
             val checksum = fileBytes.sha256()
 
@@ -97,9 +96,9 @@ class VaultRepositoryImpl(
             val bucket = supabaseClient.storage.from(Constants.SUPABASE_STORAGE_BUCKET)
 
             val encryptedBytes = tempFile.readBytes()
-            bucket.uploadAsPublic(remotePath, encryptedBytes)
+            bucket.upload(remotePath, encryptedBytes)
 
-            val publicUrl = bucket.getPublicUrl(remotePath)
+            val publicUrl = bucket.publicUrl(remotePath)
             tempFile.delete()
 
             val vaultFile = VaultFile(
@@ -154,7 +153,7 @@ class VaultRepositoryImpl(
             val bucket = supabaseClient.storage.from(Constants.SUPABASE_STORAGE_BUCKET)
 
             try {
-                bucket.remove(listOf(remotePath))
+                bucket.delete(listOf(remotePath))
             } catch (_: Exception) { }
 
             vaultFileDao.softDeleteFile(fileId)

@@ -315,7 +315,7 @@ private fun VideoContent(
         AndroidView(
             factory = {
                 PlayerView(context).apply {
-                    player = player
+                    this.player = player
                     useController = false
                     resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                 }
