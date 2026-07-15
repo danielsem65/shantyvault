@@ -42,8 +42,8 @@ class EncryptionManager @Inject constructor() {
     }
 
     private fun getKey(): SecretKey {
-        return keyStore.getEntry(keyAlias, null) as KeyStore.SecretKeyEntry
-    }.let { entry -> entry.secretKey }
+        return (keyStore.getEntry(keyAlias, null) as KeyStore.SecretKeyEntry).secretKey
+    }
 
     fun encrypt(plaintext: ByteArray): EncryptedData {
         val cipher = Cipher.getInstance(transformation)
