@@ -17,7 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.shanty.vault.util.appViewModel
 import com.shanty.vault.domain.model.Folder
 import com.shanty.vault.domain.model.VaultFile
 import com.shanty.vault.presentation.files.FilesViewModel
@@ -30,7 +30,7 @@ fun FolderDetailScreen(
     folderId: String,
     onNavigateBack: () -> Unit,
     onNavigateToFile: (String) -> Unit,
-    viewModel: FilesViewModel = hiltViewModel()
+    viewModel: FilesViewModel = appViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current

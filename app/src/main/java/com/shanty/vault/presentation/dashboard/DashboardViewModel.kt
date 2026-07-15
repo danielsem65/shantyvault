@@ -5,10 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.shanty.vault.domain.model.Activity
 import com.shanty.vault.domain.model.VaultFile
 import com.shanty.vault.domain.repository.VaultRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class DashboardUiState(
     val recentFiles: List<VaultFile> = emptyList(),
@@ -20,8 +18,7 @@ data class DashboardUiState(
     val isLoading: Boolean = true
 )
 
-@HiltViewModel
-class DashboardViewModel @Inject constructor(
+class DashboardViewModel(
     private val vaultRepository: VaultRepository
 ) : ViewModel() {
 

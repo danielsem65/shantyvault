@@ -4,7 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.hilt.navigation.compose.hiltViewModel
+
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -27,7 +27,7 @@ import com.shanty.vault.presentation.viewer.MediaViewerScreen
 fun AppNavHost(
     navController: NavHostController,
     startDestination: String,
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel
 ) {
     val authState by authViewModel.authState.collectAsState()
 

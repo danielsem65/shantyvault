@@ -23,7 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.shanty.vault.util.appViewModel
 import com.shanty.vault.domain.model.Folder
 import com.shanty.vault.domain.model.VaultFile
 import java.text.SimpleDateFormat
@@ -32,7 +32,7 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun FilesScreen(
-    viewModel: FilesViewModel = hiltViewModel(),
+    viewModel: FilesViewModel = appViewModel(),
     onNavigateToFolder: (String) -> Unit,
     onNavigateToFile: (String) -> Unit,
     onNavigateToSearch: () -> Unit

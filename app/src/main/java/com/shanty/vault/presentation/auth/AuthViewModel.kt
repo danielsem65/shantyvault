@@ -4,12 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shanty.vault.domain.repository.AuthRepository
 import com.shanty.vault.presentation.auth.AuthState.*
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 sealed class AuthState {
     object Idle : AuthState()
@@ -23,8 +21,7 @@ sealed class AuthState {
     object PasswordReset : AuthState()
 }
 
-@HiltViewModel
-class AuthViewModel @Inject constructor(
+class AuthViewModel(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 

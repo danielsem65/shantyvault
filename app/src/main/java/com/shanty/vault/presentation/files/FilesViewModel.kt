@@ -6,11 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.shanty.vault.domain.model.Folder
 import com.shanty.vault.domain.model.VaultFile
 import com.shanty.vault.domain.repository.VaultRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.io.File
-import javax.inject.Inject
 
 data class FilesUiState(
     val files: List<VaultFile> = emptyList(),
@@ -35,8 +33,7 @@ data class FilesUiState(
     val successMessage: String? = null
 )
 
-@HiltViewModel
-class FilesViewModel @Inject constructor(
+class FilesViewModel(
     private val vaultRepository: VaultRepository
 ) : ViewModel() {
 

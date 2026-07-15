@@ -4,10 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shanty.vault.domain.model.Note
 import com.shanty.vault.domain.repository.VaultRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import javax.inject.Inject
 
 data class NoteDetailUiState(
     val note: Note? = null,
@@ -19,8 +17,7 @@ data class NoteDetailUiState(
     val isLoading: Boolean = true
 )
 
-@HiltViewModel
-class NoteDetailViewModel @Inject constructor(
+class NoteDetailViewModel(
     private val vaultRepository: VaultRepository
 ) : ViewModel() {
 

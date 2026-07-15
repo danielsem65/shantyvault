@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.shanty.vault.util.appViewModel
 import com.shanty.vault.domain.model.VaultFile
 import java.text.SimpleDateFormat
 import java.util.*
@@ -32,7 +32,7 @@ fun SearchScreen(
     onNavigateToFile: (String) -> Unit,
     onNavigateToNote: (String) -> Unit,
     onNavigateToFolder: (String) -> Unit,
-    viewModel: SearchViewModel = hiltViewModel()
+    viewModel: SearchViewModel = appViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val focusRequester = remember { FocusRequester() }

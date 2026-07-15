@@ -4,12 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shanty.vault.domain.model.VaultFile
 import com.shanty.vault.domain.repository.VaultRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class SearchUiState(
     val query: String = "",
@@ -19,8 +17,7 @@ data class SearchUiState(
     val hasSearched: Boolean = false
 )
 
-@HiltViewModel
-class SearchViewModel @Inject constructor(
+class SearchViewModel(
     private val vaultRepository: VaultRepository
 ) : ViewModel() {
 

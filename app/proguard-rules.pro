@@ -1,10 +1,6 @@
 -keepattributes Signature
 -keepattributes *Annotation*
 
-# Keep Hilt
--keep class dagger.hilt.** { *; }
--keep class javax.inject.** { *; }
-
 # Keep Room
 -keep class * extends androidx.room.RoomDatabase
 -keep @androidx.room.Entity class *

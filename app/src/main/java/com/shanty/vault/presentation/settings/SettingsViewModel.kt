@@ -5,10 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.shanty.vault.data.local.UserPreferences
 import com.shanty.vault.domain.repository.AuthRepository
 import com.shanty.vault.domain.repository.VaultRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class SettingsUiState(
     val themeMode: String = "system",
@@ -26,8 +24,7 @@ data class SettingsUiState(
     val message: String? = null
 )
 
-@HiltViewModel
-class SettingsViewModel @Inject constructor(
+class SettingsViewModel(
     private val userPreferences: UserPreferences,
     private val authRepository: AuthRepository,
     private val vaultRepository: VaultRepository

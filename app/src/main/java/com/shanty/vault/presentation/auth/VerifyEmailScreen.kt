@@ -13,13 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.shanty.vault.util.appViewModel
 
 @Composable
 fun VerifyEmailScreen(
     onVerified: () -> Unit,
-    onNavigateToLogin: () -> Unit,
-    viewModel: AuthViewModel = hiltViewModel()
+    onNavigateToLogin: () -> Unit = {},
+    viewModel: AuthViewModel = appViewModel()
 ) {
     val authState by viewModel.authState.collectAsState()
 

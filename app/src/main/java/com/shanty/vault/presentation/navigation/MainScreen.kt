@@ -10,7 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.shanty.vault.util.appViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -41,9 +41,9 @@ val bottomNavItems = listOf(
 @Composable
 fun MainScreen(
     navController: NavHostController,
-    dashboardViewModel: DashboardViewModel = hiltViewModel(),
-    filesViewModel: FilesViewModel = hiltViewModel(),
-    notesViewModel: NotesViewModel = hiltViewModel()
+    dashboardViewModel: DashboardViewModel = appViewModel(),
+    filesViewModel: FilesViewModel = appViewModel(),
+    notesViewModel: NotesViewModel = appViewModel()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route

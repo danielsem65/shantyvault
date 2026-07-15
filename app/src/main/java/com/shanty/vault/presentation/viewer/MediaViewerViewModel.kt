@@ -8,11 +8,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shanty.vault.domain.model.VaultFile
 import com.shanty.vault.domain.repository.VaultRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.io.File
-import javax.inject.Inject
 
 data class MediaViewerUiState(
     val file: VaultFile? = null,
@@ -26,8 +24,7 @@ data class MediaViewerUiState(
     val successMessage: String? = null
 )
 
-@HiltViewModel
-class MediaViewerViewModel @Inject constructor(
+class MediaViewerViewModel(
     private val vaultRepository: VaultRepository
 ) : ViewModel() {
 

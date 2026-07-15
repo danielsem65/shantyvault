@@ -8,35 +8,26 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import com.shanty.vault.data.local.UserPreferences
 import com.shanty.vault.presentation.auth.AuthViewModel
 import com.shanty.vault.presentation.navigation.AppNavHost
 import com.shanty.vault.presentation.navigation.NavRoutes
 import com.shanty.vault.presentation.theme.ShantyVaultTheme
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import javax.inject.Inject
 
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    @Inject
-    lateinit var userPreferences: UserPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val isLoggedIn = runBlocking {
-            userPreferences.userId.first() != null
-        }
+        val app = application as ShantyVaultApp
+        val prefs = app.container.userPreferences
 
-        val biometricEnabled = runBlocking {
-            userPreferences.isBiometricEnabled.first()
-        }
+        val isLoggedIn = runBlocking { prefs.userId.first() != null }
+        val biometricEnabled = runBlocking { prefs.isBiometricEnabled.first() }
 
         val startDestination = when {
             isLoggedIn && biometricEnabled -> NavRoutes.BIOMETRIC_AUTH
@@ -48,7 +39,7 @@ class MainActivity : ComponentActivity() {
             ShantyVaultTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val navController = rememberNavController()
-                    val authViewModel: AuthViewModel = hiltViewModel()
+                    val authViewModel: AuthViewModel = viewModel(factory = app.viewModelFactory)
 
                     val authState by authViewModel.authState.collectAsState()
 

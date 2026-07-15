@@ -8,11 +8,9 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class TokenManager @Inject constructor(
+
+class TokenManager(
     private val context: Context
 ) {
     private val keyStore = KeyStore.getInstance("AndroidKeyStore").also { it.load(null) }

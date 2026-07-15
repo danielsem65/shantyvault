@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.shanty.vault.util.appViewModel
 import com.shanty.vault.domain.model.Activity
 import com.shanty.vault.domain.model.VaultFile
 import java.text.SimpleDateFormat
@@ -33,7 +33,7 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    viewModel: DashboardViewModel = hiltViewModel(),
+    viewModel: DashboardViewModel = appViewModel(),
     onNavigateToSearch: () -> Unit,
     onNavigateToFiles: () -> Unit,
     onNavigateToFile: (String) -> Unit

@@ -14,11 +14,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class AuthRepositoryImpl @Inject constructor(
+
+class AuthRepositoryImpl(
     private val supabaseClient: SupabaseClient,
     private val tokenManager: TokenManager,
     private val userPreferences: UserPreferences

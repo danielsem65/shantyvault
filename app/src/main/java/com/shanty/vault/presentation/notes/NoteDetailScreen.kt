@@ -18,7 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.shanty.vault.util.appViewModel
 
 private val presetColors = listOf(
     null,
@@ -36,7 +36,7 @@ private val presetColors = listOf(
 fun NoteDetailScreen(
     noteId: String,
     onNavigateBack: () -> Unit,
-    viewModel: NoteDetailViewModel = hiltViewModel()
+    viewModel: NoteDetailViewModel = appViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 

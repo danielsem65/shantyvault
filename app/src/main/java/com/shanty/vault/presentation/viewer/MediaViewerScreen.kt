@@ -26,7 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.shanty.vault.util.appViewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -42,7 +42,7 @@ import kotlin.math.roundToInt
 fun MediaViewerScreen(
     fileId: String,
     onNavigateBack: () -> Unit,
-    viewModel: MediaViewerViewModel = hiltViewModel()
+    viewModel: MediaViewerViewModel = appViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current

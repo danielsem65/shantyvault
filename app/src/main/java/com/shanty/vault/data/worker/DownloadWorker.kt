@@ -1,20 +1,16 @@
 package com.shanty.vault.data.worker
 
 import android.content.Context
-import androidx.hilt.work.HiltWorker
 import androidx.work.*
 import com.shanty.vault.domain.repository.VaultRepository
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-@HiltWorker
-class DownloadWorker @AssistedInject constructor(
-    @Assisted context: Context,
-    @Assisted workerParams: WorkerParameters,
+class DownloadWorker(
+    appContext: Context,
+    workerParams: WorkerParameters,
     private val vaultRepository: VaultRepository
-) : CoroutineWorker(context, workerParams) {
+) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
         val fileId = inputData.getString(KEY_FILE_ID) ?: return Result.failure()

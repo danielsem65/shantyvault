@@ -15,11 +15,9 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class VaultRepositoryImpl @Inject constructor(
+
+class VaultRepositoryImpl(
     private val vaultFileDao: VaultFileDao,
     private val folderDao: FolderDao,
     private val noteDao: NoteDao,

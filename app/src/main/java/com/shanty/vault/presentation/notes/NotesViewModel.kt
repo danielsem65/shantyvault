@@ -4,10 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shanty.vault.domain.model.Note
 import com.shanty.vault.domain.repository.VaultRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class NotesUiState(
     val notes: List<Note> = emptyList(),
@@ -17,8 +15,7 @@ data class NotesUiState(
     val searchResults: List<Note> = emptyList()
 )
 
-@HiltViewModel
-class NotesViewModel @Inject constructor(
+class NotesViewModel(
     private val vaultRepository: VaultRepository
 ) : ViewModel() {
 

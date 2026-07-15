@@ -18,12 +18,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.shanty.vault.util.appViewModel
 
 @Composable
 fun ForgotPasswordScreen(
     onNavigateBack: () -> Unit,
-    viewModel: AuthViewModel = hiltViewModel()
+    viewModel: AuthViewModel = appViewModel()
 ) {
     val authState by viewModel.authState.collectAsState()
     var email by remember { mutableStateOf("") }

@@ -5,8 +5,6 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-apply(plugin = "com.google.dagger.hilt.android")
-
 android {
     namespace = "com.shanty.vault"
     compileSdk = 35
@@ -76,15 +74,10 @@ dependencies {
 
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.4")
-    implementation("androidx.hilt:hilt-navigation-compose:1.4.0")
 
     // Lifecycle
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
-
-    // Hilt
-    implementation("com.google.dagger:hilt-android:2.60.1")
-    ksp("com.google.dagger:hilt-android-compiler:2.60.1")
 
     // Room
     implementation("androidx.room:room-runtime:2.7.1")
@@ -104,7 +97,6 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:auth-kt:3.2.6")
     implementation("io.github.jan-tennert.supabase:storage-kt:3.2.6")
     implementation("io.github.jan-tennert.supabase:postgrest-kt:3.2.6")
-    implementation("io.github.jan-tennert.supabase:realtime-kt:3.2.6")
     implementation("io.ktor:ktor-client-android")
 
     // Kotlin serialization (required by Supabase)
@@ -112,8 +104,6 @@ dependencies {
 
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.9.0")
-    implementation("androidx.hilt:hilt-work:1.4.0")
-    ksp("androidx.hilt:hilt-compiler:1.4.0")
 
     // Security / Encryption
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
@@ -126,9 +116,6 @@ dependencies {
     // ExoPlayer for video
     implementation("androidx.media3:media3-exoplayer:1.2.1")
     implementation("androidx.media3:media3-ui:1.2.1")
-
-    // Shimmer for loading skeletons
-    implementation("com.valentinilk.shimmer:compose-shimmer:1.0.0")
 
     // Testing
     testImplementation("junit:junit:4.13.2")
