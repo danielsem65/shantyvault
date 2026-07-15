@@ -4,33 +4,22 @@ import app.cash.turbine.test
 import com.shanty.vault.domain.model.VaultFile
 import com.shanty.vault.domain.repository.VaultRepository
 import com.shanty.vault.presentation.search.SearchViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.*
-import org.junit.After
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.whenever
-
-@OptIn(ExperimentalCoroutinesApi::class)
 class SearchViewModelTest {
 
     private lateinit var vaultRepository: VaultRepository
     private lateinit var viewModel: SearchViewModel
-    private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
-        Dispatchers.setMain(testDispatcher)
         vaultRepository = mock()
         viewModel = SearchViewModel(vaultRepository)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
     }
 
     @Test
@@ -86,7 +75,7 @@ class SearchViewModelTest {
         whenever(vaultRepository.searchFiles("test")).thenReturn(flowOf(mockFiles))
 
         viewModel.updateQuery("test")
-        testDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
 
         viewModel.uiState.test {
             val state = awaitItem()
