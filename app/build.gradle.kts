@@ -101,15 +101,18 @@ dependencies {
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.5.0")
 
+    // Ktor BOM (pins all transitive Ktor deps)
+    implementation(platform("io.ktor:ktor-bom:3.0.3"))
+
     // Supabase
     implementation("io.github.jan-tennert.supabase:auth-kt:3.2.6")
     implementation("io.github.jan-tennert.supabase:storage-kt:3.2.6")
     implementation("io.github.jan-tennert.supabase:postgrest-kt:3.2.6")
     implementation("io.github.jan-tennert.supabase:realtime-kt:3.2.6")
-    implementation("io.ktor:ktor-client-android:3.0.3")
+    implementation("io.ktor:ktor-client-android")
 
     // Kotlin serialization (required by Supabase)
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.9.0")

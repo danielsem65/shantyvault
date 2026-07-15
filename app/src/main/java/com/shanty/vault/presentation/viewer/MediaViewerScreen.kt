@@ -380,11 +380,8 @@ private fun VideoContent(
 
                 )
             }
-        
-                )
-            }
         }
-
+        
         IconButton(
             onClick = onToggleFullscreen,
             modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
