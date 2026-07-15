@@ -1,6 +1,7 @@
 package com.shanty.vault
 
 import app.cash.turbine.test
+import com.shanty.vault.domain.model.StorageUsage
 import com.shanty.vault.domain.model.VaultFile
 import com.shanty.vault.domain.repository.VaultRepository
 import com.shanty.vault.presentation.dashboard.DashboardViewModel
@@ -22,9 +23,11 @@ class DashboardViewModelTest {
         whenever(vaultRepository.getRecentFiles(10)).thenReturn(flowOf(emptyList()))
         whenever(vaultRepository.getFavoriteFiles()).thenReturn(flowOf(emptyList()))
         whenever(vaultRepository.getRecentActivities(20)).thenReturn(flowOf(emptyList()))
-        whenever(vaultRepository.getStorageUsage()).thenReturn(
-            flowOf(com.shanty.vault.domain.repository.StorageUsage(0L, 5L * 1024 * 1024 * 1024, 0.0))
-        )
+        runTest {
+            whenever(vaultRepository.getStorageUsage()).thenReturn(
+                flowOf(StorageUsage(0L, 5L * 1024 * 1024 * 1024, 0.0))
+            )
+        }
         viewModel = DashboardViewModel(vaultRepository)
     }
 

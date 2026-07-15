@@ -2,6 +2,7 @@ package com.shanty.vault
 
 import app.cash.turbine.test
 import com.shanty.vault.data.local.UserPreferences
+import com.shanty.vault.domain.model.StorageUsage
 import com.shanty.vault.domain.repository.AuthRepository
 import com.shanty.vault.domain.repository.VaultRepository
 import com.shanty.vault.presentation.settings.SettingsViewModel
@@ -35,9 +36,11 @@ class SettingsViewModelTest {
         whenever(userPreferences.isBiometricEnabled).thenReturn(flowOf(false))
         whenever(userPreferences.isMfaEnabled).thenReturn(flowOf(false))
         whenever(userPreferences.notificationsEnabled).thenReturn(flowOf(true))
-        whenever(vaultRepository.getStorageUsage()).thenReturn(
-            flowOf(com.shanty.vault.domain.repository.StorageUsage(0L, 5L * 1024 * 1024 * 1024, 0.0))
-        )
+        runTest {
+            whenever(vaultRepository.getStorageUsage()).thenReturn(
+                flowOf(StorageUsage(0L, 5L * 1024 * 1024 * 1024, 0.0))
+            )
+        }
         viewModel = SettingsViewModel(userPreferences, authRepository, vaultRepository)
     }
 
