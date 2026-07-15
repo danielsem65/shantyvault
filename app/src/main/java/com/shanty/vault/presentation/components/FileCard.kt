@@ -158,27 +158,6 @@ private fun FileListCard(
     }
 }
 
-@Composable
-private fun FileTypeIcon(file: VaultFile, modifier: Modifier = Modifier) {
-    val icon = when {
-        file.isImage -> Icons.Filled.Image
-        file.isVideo -> Icons.Filled.Videocam
-        file.isDocument -> Icons.Filled.Description
-        file.isAudio -> Icons.Filled.Audiotrack
-        file.isArchive -> Icons.Filled.FolderZip
-        else -> Icons.Filled.InsertDriveFile
-    }
-    val tint = when {
-        file.isImage -> MaterialTheme.colorScheme.tertiary
-        file.isVideo -> MaterialTheme.colorScheme.secondary
-        file.isDocument -> MaterialTheme.colorScheme.primary
-        file.isAudio -> MaterialTheme.colorScheme.error
-        file.isArchive -> MaterialTheme.colorScheme.onSurfaceVariant
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    Icon(icon, contentDescription = null, modifier = modifier, tint = tint)
-}
-
 private fun relativeTime(timestamp: Long): String {
     val now = System.currentTimeMillis()
     val diff = now - timestamp

@@ -217,7 +217,7 @@ private fun FullscreenContent(
                 AndroidView(
                     factory = {
                         PlayerView(context).apply {
-                            player = player
+                            this.player = player
                             useController = true
                             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                         }
@@ -366,7 +366,7 @@ private fun VideoContent(
                 )
                 Slider(
                     value = if (player.duration > 0) player.currentPosition.toFloat() / player.duration.toFloat() else 0f,
-                    onValueChange = { player.seekTo((it * player.duration).roundToInt()) },
+                    onValueChange = { player.seekTo((it * player.duration).roundToInt().toLong()) },
                     modifier = Modifier.weight(1f),
                     colors = SliderDefaults.colors(
                         thumbColor = Color.White,
@@ -377,6 +377,10 @@ private fun VideoContent(
                     text = formatDuration(player.duration),
                     color = Color.White,
                     style = MaterialTheme.typography.bodySmall
+
+                )
+            }
+        
                 )
             }
         }
@@ -552,7 +556,7 @@ private fun AudioContent(
             )
             Slider(
                 value = if (player.duration > 0) player.currentPosition.toFloat() / player.duration.toFloat() else 0f,
-                onValueChange = { player.seekTo((it * player.duration).roundToInt()) },
+                onValueChange = { player.seekTo((it * player.duration).roundToInt().toLong()) },
                 modifier = Modifier.weight(1f)
             )
             Text(

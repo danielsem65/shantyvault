@@ -447,7 +447,7 @@ private fun FileGridCard(
                 )
             }
         )
-        HorizontalDivider()
+        Divider()
         DropdownMenuItem(
             text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
             onClick = {
@@ -599,7 +599,7 @@ private fun FileListRow(
                 )
             }
         )
-        HorizontalDivider()
+        Divider()
         DropdownMenuItem(
             text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
             onClick = {

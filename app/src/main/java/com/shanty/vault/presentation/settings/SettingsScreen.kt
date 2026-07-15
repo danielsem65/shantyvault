@@ -220,12 +220,12 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    HorizontalDivider()
+                    Divider()
                     Text(
                         "A secure personal cloud vault for private, encrypted cloud storage. Upload, organize, and access your files from anywhere with end-to-end encryption.",
                         style = MaterialTheme.typography.bodyMedium
                     )
-                    HorizontalDivider()
+                    Divider()
                     Text(
                         "Features:",
                         style = MaterialTheme.typography.titleSmall,

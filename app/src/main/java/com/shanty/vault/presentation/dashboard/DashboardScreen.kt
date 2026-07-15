@@ -158,7 +158,7 @@ private fun StorageCard(state: DashboardUiState) {
             }
             Spacer(modifier = Modifier.height(12.dp))
             LinearProgressIndicator(
-                progress = { state.storagePercentUsed.toFloat() },
+                progress = state.storagePercentUsed.toFloat(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)

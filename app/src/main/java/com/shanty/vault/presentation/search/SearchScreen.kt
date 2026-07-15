@@ -155,8 +155,9 @@ fun SearchScreen(
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
+                        val filterType = uiState.filterType
                         val filtered = uiState.results.filter { file ->
-                            uiState.filterType == null || matchesFilter(file, uiState.filterType)
+                            filterType == null || matchesFilter(file, filterType)
                         }
                         items(filtered, key = { it.id }) { file ->
                             SearchResultItem(
@@ -172,6 +173,7 @@ fun SearchScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FilterChipsRow(
     selectedFilter: String?,

@@ -1,5 +1,8 @@
 package com.shanty.vault.domain.model
 
+import kotlin.math.log10
+import kotlin.math.pow
+
 data class VaultFile(
     val id: String,
     val name: String,
@@ -28,8 +31,8 @@ data class VaultFile(
         private fun Long.toFormattedFileSize(): String {
             if (this <= 0) return "0 B"
             val units = arrayOf("B", "KB", "MB", "GB", "TB")
-            val digitGroups = (kotlin.math.log10(this.toDouble()) / kotlin.math.log10(1024.0)).toInt()
-            val size = this / kotlin.math.pow(1024.0, digitGroups.toDouble())
+            val digitGroups = (log10(this.toDouble()) / log10(1024.0)).toInt()
+            val size = this / pow(1024.0, digitGroups.toDouble())
             return "%.1f %s".format(size, units[digitGroups])
         }
     }
