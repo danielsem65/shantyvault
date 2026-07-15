@@ -1,6 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
 }
@@ -46,10 +48,6 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"
     }
 
     packaging {
@@ -100,12 +98,15 @@ dependencies {
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.5.0")
 
-    // Supabase (2.x uses combined artifact + Ktor 2.x)
-    implementation("io.github.jan-tennert.supabase:supabase-kt:2.6.1")
-    implementation("io.ktor:ktor-client-android:2.3.12")
+    // Supabase
+    implementation("io.github.jan-tennert.supabase:auth-kt:3.2.6")
+    implementation("io.github.jan-tennert.supabase:storage-kt:3.2.6")
+    implementation("io.github.jan-tennert.supabase:postgrest-kt:3.2.6")
+    implementation("io.github.jan-tennert.supabase:realtime-kt:3.2.6")
+    implementation("io.ktor:ktor-client-android:3.0.3")
 
     // Kotlin serialization (required by Supabase)
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.9.0")
