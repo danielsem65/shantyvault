@@ -24,32 +24,8 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Create google-services.json
-        env:
-          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
-        run: |
-          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
-            echo "$GOOGLE_SERVICES_JSON" > app/google-services.json
-          else
-            echo '{
-              "project_info": {
-                "project_number": "placeholder",
-                "project_id": "placeholder",
-                "storage_bucket": "placeholder"
-              },
-              "client": [
-                {
-                  "client_info": {
-                    "mobilesdk_app_id": "1:placeholder:android:placeholder",
-                    "android_client_info": {
-                      "package_name": "com.shanty.vault"
-                    }
-                  },
-                  "api_key": [{ "current_key": "placeholder" }]
-                }
-              ]
-            }' > app/google-services.json
-          fi
+      - name: Install Android SDK platform 35
+        run: sdkmanager "platforms;android-35"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
