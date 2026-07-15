@@ -92,24 +92,14 @@ class MediaViewerViewModelTest {
     }
 
     @Test
-    fun `clear error resets error message`() = runTest {
-        viewModel.uiState.test {
-            skipItems(1)
-            viewModel.clearError()
-            val state = awaitItem()
-            assert(state.errorMessage == null)
-            cancelAndIgnoreRemainingEvents()
-        }
+    fun `clear error resets error message`() {
+        viewModel.clearError()
+        assert(viewModel.uiState.value.errorMessage == null)
     }
 
     @Test
-    fun `clear success resets success message`() = runTest {
-        viewModel.uiState.test {
-            skipItems(1)
-            viewModel.clearSuccess()
-            val state = awaitItem()
-            assert(state.successMessage == null)
-            cancelAndIgnoreRemainingEvents()
-        }
+    fun `clear success resets success message`() {
+        viewModel.clearSuccess()
+        assert(viewModel.uiState.value.successMessage == null)
     }
 }

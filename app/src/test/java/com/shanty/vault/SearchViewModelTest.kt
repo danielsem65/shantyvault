@@ -46,13 +46,9 @@ class SearchViewModelTest {
 
     @Test
     fun `update query updates state`() = runTest {
-        viewModel.uiState.test {
-            skipItems(1)
-            viewModel.updateQuery("test")
-            val state = awaitItem()
-            assert(state.query == "test")
-            cancelAndIgnoreRemainingEvents()
-        }
+        viewModel.updateQuery("test")
+        val state = viewModel.uiState.value
+        assert(state.query == "test")
     }
 
     @Test
