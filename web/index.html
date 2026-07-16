@@ -1,13 +1,520 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ShantyVault</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShantyVault</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"><\/script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+a{color:#38bdf8;text-decoration:none}
+.container{max-width:1200px;margin:0 auto;padding:0 1rem}
+.card{background:#1e293b;border-radius:12px;padding:2rem;border:1px solid #334155}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;border:none;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .15s}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:#3b82f6;color:#fff}
+.btn-primary:hover:not(:disabled){background:#2563eb}
+.btn-danger{background:#ef4444;color:#fff}
+.btn-danger:hover:not(:disabled){background:#dc2626}
+.btn-ghost{background:transparent;color:#94a3b8;border:1px solid #334155}
+.btn-ghost:hover{background:#334155;color:#e2e8f0}
+.btn-sm{padding:.4rem .8rem;font-size:.85rem}
+.input{width:100%;padding:.75rem 1rem;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:.95rem}
+.input:focus{outline:none;border-color:#3b82f6}
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;margin-bottom:.4rem;color:#94a3b8;font-size:.9rem}
+.auth-container{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.auth-card{background:#1e293b;border-radius:16px;padding:2.5rem;width:100%;max-width:420px;border:1px solid #334155}
+.auth-card h1{text-align:center;margin-bottom:.5rem;font-size:1.8rem}
+.auth-card p{text-align:center;color:#94a3b8;margin-bottom:2rem}
+.auth-card .btn{width:100%;justify-content:center;margin-top:1rem}
+.err{background:#450a0a;border:1px solid #ef4444;color:#fca5a5;padding:.75rem;border-radius:8px;margin-bottom:1rem;font-size:.9rem}
+.ok{background:#052e16;border:1px solid #22c55e;color:#86efac;padding:.75rem;border-radius:8px;margin-bottom:1rem;font-size:.9rem}
+.nav{background:#1e293b;border-bottom:1px solid #334155;padding:0 1rem;position:sticky;top:0;z-index:100}
+.nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;height:60px;gap:.5rem}
+.nav-brand{font-size:1.3rem;font-weight:700;color:#e2e8f0;display:flex;align-items:center;gap:.5rem;cursor:pointer}
+.nav-links{display:flex;gap:.25rem;margin-left:2rem;flex:1}
+.nav-links a{padding:.5rem 1rem;border-radius:8px;color:#94a3b8;font-size:.9rem;font-weight:500;cursor:pointer}
+.nav-links a:hover,.nav-links a.active{background:#334155;color:#e2e8f0}
+.nav-user{display:flex;align-items:center;gap:1rem}
+.nav-user span{color:#94a3b8;font-size:.9rem}
+.page{display:none}.page.active{display:block}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-top:1.5rem}
+.page-header h2{font-size:1.5rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;margin-top:1rem}
+.stat-card{background:#1e293b;border-radius:12px;padding:1.5rem;border:1px solid #334155}
+.stat-card h3{color:#94a3b8;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem}
+.stat-card .value{font-size:2rem;font-weight:700}
+.bar-bg{background:#334155;border-radius:999px;height:8px;overflow:hidden;margin-top:.5rem}
+.bar-fill{background:linear-gradient(90deg,#3b82f6,#8b5cf6);height:100%;border-radius:999px;transition:width .3s}
+.file-list{margin-top:1rem}
+.file-item{display:flex;align-items:center;gap:1rem;padding:.75rem 1rem;background:#1e293b;border:1px solid #334155;border-radius:8px;margin-bottom:.5rem}
+.file-item:hover{background:#334155}
+.file-icon{font-size:1.5rem}
+.file-info{flex:1;min-width:0}
+.file-info .name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-info .meta{color:#64748b;font-size:.8rem}
+.file-actions{display:flex;gap:.5rem}
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-top:1rem}
+.note-card{background:#1e293b;border-radius:12px;padding:1.25rem;border:1px solid #334155;cursor:pointer;transition:all .15s}
+.note-card:hover{border-color:#3b82f6;transform:translateY(-2px)}
+.note-card h3{margin-bottom:.5rem;font-size:1.1rem}
+.note-card p{color:#94a3b8;font-size:.9rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.note-card .date{color:#64748b;font-size:.8rem;margin-top:.5rem}
+.note-editor{max-width:800px;margin:2rem auto}
+.note-editor textarea{min-height:300px;resize:vertical;font-family:inherit}
+.note-editor .btn-group{display:flex;gap:.5rem;margin-top:1rem}
+.empty-state{text-align:center;padding:3rem;color:#64748b}
+.empty-state h3{margin-bottom:.5rem}
+.search-bar input{padding-left:2.5rem;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat .75rem center}
+.spinner{width:24px;height:24px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:spin .6s linear infinite;margin:2rem auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:2rem;right:2rem;padding:1rem 1.5rem;border-radius:8px;z-index:300;animation:slideUp .3s ease}
+.toast-err{background:#450a0a;border:1px solid #ef4444;color:#fca5a5}
+.toast-ok{background:#052e16;border:1px solid #22c55e;color:#86efac}
+@keyframes slideUp{from{opacity:0;transform:translateY(1rem)};to{opacity:1;transform:translateY(0)}}
+.tag{display:inline-block;padding:.2rem .5rem;border-radius:4px;font-size:.75rem;font-weight:500;margin-left:.5rem}
+.tag-img{background:#1e3a5f;color:#93c5fd}
+.tag-vid{background:#3b0764;color:#d8b4fe}
+.tag-aud{background:#14532d;color:#86efac}
+.tag-doc{background:#422006;color:#fcd34d}
+.tag-arc{background:#1c1917;color:#d6d3d1}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem}
+.modal{background:#1e293b;border-radius:16px;padding:2rem;width:100%;max-width:500px;border:1px solid #334155}
+.modal h2{margin-bottom:1rem}
+.modal .btn-group{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1.5rem}
+@media(max-width:768px){.nav-links{gap:0;margin-left:1rem}.nav-links a{padding:.4rem .6rem;font-size:.8rem}.grid,.notes-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+const SUPABASE_URL = 'https://iprjbhkxbqnheawligte.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwcmpiaGt4YnFuaGVhd2xpZ3RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NzkxNjEsImV4cCI6MjA5OTU1NTE2MX0.LquFhsp4u6_lbxZ8wZe7LX58A7VaRkEVu4vGXf416o8'
+const STORAGE_BUCKET = 'vault-files'
+const STORAGE_LIMIT = 5 * 1024 * 1024 * 1024
+
+const { createClient } = supabase
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// State
+let user = null
+let currentPage = 'login'
+let toastTimer = null
+let fileRefresh = null
+let notesRefresh = null
+
+const pages = ['login','register','dashboard','files','notes']
+
+function $(id) { return document.getElementById(id) }
+
+function showToast(msg, type='ok') {
+  const el = $('toast')
+  el.textContent = msg
+  el.className = 'toast toast-' + type
+  el.style.display = 'block'
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => el.style.display = 'none', 4000)
+}
+
+function formatSize(bytes) {
+  if (!bytes) return '0 B'
+  const k = 1024, s = ['B','KB','MB','GB']
+  const i = Math.floor(Math.log(bytes)/Math.log(k))
+  return parseFloat((bytes/Math.pow(k,i)).toFixed(1))+' '+s[i]
+}
+
+function getFileIcon(n) {
+  const e = n.split('.').pop().toLowerCase()
+  if(['jpg','jpeg','png','gif','webp'].includes(e)) return '🖼️'
+  if(['mp4','mov','avi','mkv'].includes(e)) return '🎬'
+  if(['mp3','wav','flac','ogg'].includes(e)) return '🎵'
+  if(['pdf','doc','docx','txt'].includes(e)) return '📄'
+  if(['zip','rar','tar','gz','7z'].includes(e)) return '📦'
+  return '📁'
+}
+
+function getFileTag(n) {
+  const e = n.split('.').pop().toLowerCase()
+  if(['jpg','jpeg','png','gif','webp'].includes(e)) return '<span class="tag tag-img">Image</span>'
+  if(['mp4','mov','avi','mkv'].includes(e)) return '<span class="tag tag-vid">Video</span>'
+  if(['mp3','wav','flac','ogg'].includes(e)) return '<span class="tag tag-aud">Audio</span>'
+  if(['pdf','doc','docx','txt','rtf'].includes(e)) return '<span class="tag tag-doc">Doc</span>'
+  if(['zip','rar','tar','gz','7z'].includes(e)) return '<span class="tag tag-arc">Archive</span>'
+  return ''
+}
+
+function navigate(page) {
+  currentPage = page
+  const hash = page === 'dashboard' ? '' : page
+  history.pushState(null, '', hash ? '/'+hash : '/')
+  render()
+}
+
+// ── Render ──
+function render() {
+  if (!user) {
+    if (currentPage === 'register') renderRegister()
+    else renderLogin()
+    return
+  }
+
+  const app = $('app')
+  app.innerHTML = `
+    <nav class="nav"><div class="nav-inner">
+      <span class="nav-brand" onclick="navigate('dashboard')">ShantyVault</span>
+      <div class="nav-links">
+        <a onclick="navigate('dashboard')" class="${currentPage==='dashboard'?'active':''}">Dashboard</a>
+        <a onclick="navigate('files')" class="${currentPage==='files'?'active':''}">Files</a>
+        <a onclick="navigate('notes')" class="${currentPage==='notes'?'active':''}">Notes</a>
+      </div>
+      <div class="nav-user">
+        <span>${user.email}</span>
+        <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </div></nav>
+    <div class="container">
+      <div id="page-dashboard" class="page ${currentPage==='dashboard'?'active':''}"></div>
+      <div id="page-files" class="page ${currentPage==='files'?'active':''}"></div>
+      <div id="page-notes" class="page ${currentPage==='notes'?'active':''}"></div>
+    </div>
+    <div id="toast" style="display:none"></div>
+  `
+
+  if (currentPage === 'dashboard') renderDashboard()
+  else if (currentPage === 'files') renderFiles()
+  else if (currentPage === 'notes') renderNotes()
+}
+
+// ── Login ──
+function renderLogin() {
+  $('app').innerHTML = `
+    <div class="auth-container"><div class="auth-card">
+      <h1>ShantyVault</h1><p>Sign in to your vault</p>
+      <div id="login-err" class="err" style="display:none"></div>
+      <div id="login-ok" class="ok" style="display:none"></div>
+      <form onsubmit="doLogin(event)">
+        <div class="form-group"><label>Email</label><input class="input" id="login-email" type="email" placeholder="you@example.com" required></div>
+        <div class="form-group"><label>Password</label><input class="input" id="login-pass" type="password" placeholder="••••••••" required></div>
+        <button class="btn btn-primary" id="login-btn" type="submit">Sign In</button>
+      </form>
+      <p style="margin-top:1rem;font-size:.9rem"><a href="#" onclick="resetPass(event)">Forgot password?</a></p>
+      <p style="margin-top:.5rem;font-size:.9rem">Don't have an account? <a href="#" onclick="navigate('register')">Register</a></p>
+    </div></div>
+  `
+}
+
+async function doLogin(e) {
+  e.preventDefault()
+  const btn = $('login-btn'); btn.disabled = true; btn.textContent = 'Signing in…'
+  const { error } = await sb.auth.signInWithPassword({ email: $('login-email').value, password: $('login-pass').value })
+  if (error) { $('login-err').textContent = error.message; $('login-err').style.display = 'block'; btn.disabled = false; btn.textContent = 'Sign In'; return }
+  user = (await sb.auth.getUser()).data.user
+  showToast('Logged in')
+  navigate('dashboard')
+}
+
+async function resetPass(e) {
+  e.preventDefault()
+  const email = $('login-email').value
+  if (!email) { $('login-err').textContent = 'Enter your email first'; $('login-err').style.display = 'block'; return }
+  $('login-err').style.display = 'none'
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
+  if (error) { $('login-err').textContent = error.message; $('login-err').style.display = 'block'; return }
+  $('login-ok').textContent = 'Check your email for the reset link'; $('login-ok').style.display = 'block'
+}
+
+// ── Register ──
+function renderRegister() {
+  $('app').innerHTML = `
+    <div class="auth-container"><div class="auth-card">
+      <h1>ShantyVault</h1><p>Create your account</p>
+      <div id="reg-err" class="err" style="display:none"></div>
+      <div id="reg-ok" class="ok" style="display:none"></div>
+      <form onsubmit="doRegister(event)">
+        <div class="form-group"><label>Name</label><input class="input" id="reg-name" type="text" placeholder="Your name" required></div>
+        <div class="form-group"><label>Email</label><input class="input" id="reg-email" type="email" placeholder="you@example.com" required></div>
+        <div class="form-group"><label>Password</label><input class="input" id="reg-pass" type="password" placeholder="Min 8 characters" required minlength="8"></div>
+        <button class="btn btn-primary" id="reg-btn" type="submit">Create Account</button>
+      </form>
+      <p style="margin-top:1rem;font-size:.9rem;text-align:center">Already have an account? <a href="#" onclick="navigate('login')">Sign in</a></p>
+    </div></div>
+  `
+}
+
+async function doRegister(e) {
+  e.preventDefault()
+  const btn = $('reg-btn'); btn.disabled = true; btn.textContent = 'Creating…'
+  const { error } = await sb.auth.signUp({
+    email: $('reg-email').value, password: $('reg-pass').value,
+    options: { data: { name: $('reg-name').value } }
+  })
+  if (error) { $('reg-err').textContent = error.message; $('reg-err').style.display = 'block'; btn.disabled = false; btn.textContent = 'Create Account'; return }
+  $('reg-ok').textContent = 'Registration successful! Check your email to verify.'; $('reg-ok').style.display = 'block'
+  btn.disabled = false; btn.textContent = 'Create Account'
+}
+
+// ── Logout ──
+async function logout() {
+  await sb.auth.signOut()
+  user = null
+  navigate('login')
+}
+
+// ── Dashboard ──
+async function renderDashboard() {
+  const el = $('page-dashboard')
+  el.innerHTML = '<div class="spinner"></div>'
+
+  const [filesData, notesData] = await Promise.all([
+    sb.from('files').select('*').eq('user_id', user.id),
+    sb.from('notes').select('*').eq('user_id', user.id).order('updated_at', { ascending: false }).limit(6)
+  ])
+  const files = filesData.data || []
+  const notes = notesData.data || []
+  const totalSize = files.reduce((s, f) => s + (f.size || 0), 0)
+  const percent = Math.min(100, (totalSize / STORAGE_LIMIT) * 100)
+
+  el.innerHTML = `
+    <div class="page-header"><h2>Dashboard</h2><span style="color:#94a3b8">Welcome, ${user.user_metadata?.name || user.email}</span></div>
+    <div class="grid">
+      <div class="stat-card">
+        <h3>Storage Used</h3>
+        <div class="value">${formatSize(totalSize)}</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:${percent}%"></div></div>
+        <div style="margin-top:.5rem;font-size:.85rem;color:#94a3b8">${percent.toFixed(1)}% of ${formatSize(STORAGE_LIMIT)}</div>
+      </div>
+      <div class="stat-card"><h3>Files</h3><div class="value">${files.length}</div></div>
+      <div class="stat-card"><h3>Notes</h3><div class="value">${notes.length}</div></div>
+    </div>
+    <div style="margin-top:2rem">
+      <h3 style="margin-bottom:1rem">Recent Notes</h3>
+      ${notes.length === 0 ? '<div class="empty-state"><h3>No notes yet</h3><p>Create your first note.</p></div>' :
+        '<div class="notes-grid">' + notes.map(n => `
+          <div class="note-card" onclick="navigate('notes')">
+            <h3>${esc(n.title) || 'Untitled'}</h3>
+            <p>${esc(n.content)}</p>
+            <div class="date">${new Date(n.updated_at).toLocaleDateString()}</div>
+          </div>
+        `).join('') + '</div>'}
+    </div>
+  `
+}
+
+// ── Files ──
+async function renderFiles() {
+  const el = $('page-files')
+  el.innerHTML = `
+    <div class="page-header"><h2>Files</h2><button class="btn btn-primary" onclick="document.getElementById('file-input').click()">+ Upload File</button></div>
+    <input type="file" id="file-input" style="display:none" onchange="uploadFile(this)">
+    <div id="file-list"><div class="spinner"></div></div>
+  `
+  loadFiles()
+}
+
+async function loadFiles() {
+  const el = $('file-list')
+  const { data } = await sb.from('files').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+  const files = data || []
+  if (files.length === 0) {
+    el.innerHTML = '<div class="empty-state"><h3>No files yet</h3><p>Upload your first file.</p></div>'
+    return
+  }
+  el.innerHTML = '<div class="file-list">' + files.map(f => `
+    <div class="file-item">
+      <div class="file-icon">${getFileIcon(f.name)}</div>
+      <div class="file-info">
+        <div class="name">${esc(f.name)} ${getFileTag(f.name)}</div>
+        <div class="meta">${formatSize(f.size)} &middot; ${new Date(f.created_at).toLocaleDateString()}</div>
+      </div>
+      <div class="file-actions">
+        <a class="btn btn-ghost btn-sm" href="${getFileUrl(f)}" target="_blank" rel="noopener">Download</a>
+        <button class="btn btn-danger btn-sm" onclick="deleteFile('${f.id}','${esc(f.name)}','${esc(f.remote_path)}')">Delete</button>
+      </div>
+    </div>
+  `).join('') + '</div>'
+}
+
+function getFileUrl(f) {
+  const { data } = sb.storage.from(STORAGE_BUCKET).getPublicUrl(f.remote_path)
+  return data.publicUrl
+}
+
+async function uploadFile(input) {
+  const file = input.files[0]
+  if (!file) return
+  showToast('Uploading…')
+  const ext = file.name.split('.').pop() || ''
+  const fileId = crypto.randomUUID()
+  const remotePath = `${user.id}/files/${fileId}/${file.name}`
+
+  const { error: upErr } = await sb.storage.from(STORAGE_BUCKET).upload(remotePath, file)
+  if (upErr) { showToast(upErr.message, 'err'); input.value = ''; return }
+
+  const { error: dbErr } = await sb.from('files').insert({
+    user_id: user.id, name: file.name, extension: ext,
+    mime_type: file.type || 'application/octet-stream', size: file.size, remote_path: remotePath
+  })
+  if (dbErr) showToast('Upload done, but metadata error: '+dbErr.message, 'err')
+  else showToast('Uploaded ' + file.name)
+  input.value = ''
+  loadFiles()
+}
+
+async function deleteFile(id, name, path) {
+  if (!confirm('Delete ' + name + '?')) return
+  const { error: sErr } = await sb.storage.from(STORAGE_BUCKET).remove([path])
+  if (sErr) { showToast(sErr.message, 'err'); return }
+  await sb.from('files').delete().eq('id', id)
+  showToast('Deleted ' + name)
+  loadFiles()
+}
+
+// ── Notes ──
+let editingNote = null
+
+async function renderNotes() {
+  const el = $('page-notes')
+  el.innerHTML = `
+    <div class="page-header"><h2>Notes</h2><button class="btn btn-primary" onclick="startNewNote()">+ New Note</button></div>
+    <div id="notes-content"></div>
+  `
+  loadNotesList()
+}
+
+async function loadNotesList() {
+  const el = $('notes-content')
+  const { data } = await sb.from('notes').select('*').eq('user_id', user.id).order('is_pinned', { ascending: false }).order('updated_at', { ascending: false })
+  const notes = data || []
+  el.innerHTML = `
+    <div class="search-bar"><input class="input" placeholder="Search notes…" oninput="searchNotes(this.value)" id="notes-search"></div>
+    <div id="notes-grid">${renderNotesGrid(notes)}</div>
+  `
+}
+
+function renderNotesGrid(notes) {
+  if (notes.length === 0) return '<div class="empty-state"><h3>No notes yet</h3><p>Create your first note.</p></div>'
+  return '<div class="notes-grid">' + notes.map(n => `
+    <div class="note-card" onclick="editNote('${n.id}','${esc(n.title)}','${esc(n.content)}',${n.is_pinned})">
+      <h3>${esc(n.title) || 'Untitled'}${n.is_pinned ? ' <span style="color:#eab308">📌</span>' : ''}</h3>
+      <p>${esc(n.content)}</p>
+      <div class="date">
+        ${new Date(n.updated_at).toLocaleDateString()}
+        <span style="float:right">
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();togglePin('${n.id}',${!n.is_pinned})">${n.is_pinned ? 'Unpin' : 'Pin'}</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteNoteConfirm('${n.id}','${esc(n.title)}')" style="margin-left:.25rem">Delete</button>
+        </span>
+      </div>
+    </div>
+  `).join('') + '</div>'
+}
+
+async function searchNotes(q) {
+  const { data } = await sb.from('notes').select('*').eq('user_id', user.id).order('is_pinned', { ascending: false }).order('updated_at', { ascending: false })
+  const notes = (data || []).filter(n => !q || n.title.toLowerCase().includes(q.toLowerCase()) || n.content.toLowerCase().includes(q.toLowerCase()))
+  $('notes-grid').innerHTML = renderNotesGrid(notes)
+}
+
+function startNewNote() {
+  editingNote = { id: 'new', title: '', content: '' }
+  showNoteEditor()
+}
+
+function editNote(id, title, content) {
+  editingNote = { id, title, content }
+  showNoteEditor()
+}
+
+function showNoteEditor() {
+  $('notes-content').innerHTML = `
+    <div class="note-editor card">
+      <div class="form-group"><label>Title</label><input class="input" id="note-title" value="${esc(editingNote.title)}" placeholder="Note title"></div>
+      <div class="form-group"><label>Content</label><textarea class="input" id="note-content" placeholder="Write something…">${esc(editingNote.content)}</textarea></div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="saveNote()">Save</button>
+        <button class="btn btn-ghost" onclick="cancelNote()">Cancel</button>
+        ${editingNote.id !== 'new' ? `<button class="btn btn-danger" onclick="deleteNoteEdit()" style="margin-left:auto">Delete</button>` : ''}
+      </div>
+    </div>
+  `
+}
+
+function cancelNote() { editingNote = null; loadNotesList() }
+
+async function saveNote() {
+  const title = $('note-title').value.trim() || 'Untitled'
+  const content = $('note-content').value.trim()
+  if (editingNote.id === 'new') {
+    const { error } = await sb.from('notes').insert({ user_id: user.id, title, content })
+    if (error) { showToast(error.message, 'err'); return }
+    showToast('Note created')
+  } else {
+    const { error } = await sb.from('notes').update({ title, content, updated_at: new Date().toISOString() }).eq('id', editingNote.id)
+    if (error) { showToast(error.message, 'err'); return }
+    showToast('Note saved')
+  }
+  editingNote = null
+  loadNotesList()
+}
+
+async function togglePin(id, pinned) {
+  await sb.from('notes').update({ is_pinned: pinned, updated_at: new Date().toISOString() }).eq('id', id)
+  loadNotesList()
+}
+
+async function deleteNoteConfirm(id, title) {
+  if (!confirm('Delete "' + title + '"?')) return
+  await sb.from('notes').delete().eq('id', id)
+  showToast('Note deleted')
+  if (editingNote?.id === id) editingNote = null
+  loadNotesList()
+}
+
+async function deleteNoteEdit() {
+  if (!confirm('Delete this note?')) return
+  await sb.from('notes').delete().eq('id', editingNote.id)
+  showToast('Note deleted')
+  editingNote = null
+  loadNotesList()
+}
+
+// ── Helpers ──
+function esc(s) { if (!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') }
+
+// ── Auth listener & init ──
+sb.auth.onAuthStateChange((event, session) => {
+  if (session?.user && !user) {
+    user = session.user
+    navigate('dashboard')
+  } else if (!session?.user && user) {
+    user = null
+    navigate('login')
+  }
+})
+
+window.addEventListener('popstate', () => {
+  const path = location.pathname.replace(/^\//, '')
+  const page = path || 'dashboard'
+  if (pages.includes(page)) currentPage = page
+  render()
+})
+
+;(async () => {
+  const { data: { session } } = await sb.auth.getSession()
+  if (session?.user) {
+    user = session.user
+    const path = location.pathname.replace(/^\//, '')
+    currentPage = (path && pages.includes(path)) ? path : 'dashboard'
+  } else {
+    const path = location.pathname.replace(/^\//, '')
+    if (path === 'register') currentPage = 'register'
+    else currentPage = 'login'
+  }
+  render()
+})()
+</script>
+</body>
 </html>
